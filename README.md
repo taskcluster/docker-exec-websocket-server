@@ -1,2 +1,2 @@
-# docker-experiments
-Messing around with docker and websockets
+# docker-exec-websocket-server
+A server that serves the results of docker exec over websockets. 
