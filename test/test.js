@@ -12,16 +12,14 @@ var server = new Server({
   path: randpath,
 });
 
-debug('ws://localhost:8080'+randpath);
-
 var socket = new ws('ws://localhost:8080'+randpath);
-socket.on('message',(message) => {
+socket.once('message',(message) => {
   debug(message);
+  socket.send('hi\n');
+  socket.on('message',(message) => {
+    debug(message);
+  })
 });
 socket.on('open',() => {
   socket.send('cat');
-  setTimeout(() => {
-    socket.send('hi\n');
-  },300)
-  
 });
