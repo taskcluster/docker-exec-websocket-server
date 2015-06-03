@@ -5,6 +5,7 @@
   "scripts": {
     "test": "./test/runtests.sh"
   },
+  "main": "./lib/server.js",
   "dependencies": {
     "babel": "^5.0.9",
     "debug": "^2.1.3",

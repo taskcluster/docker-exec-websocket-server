@@ -1,6 +1,5 @@
 suite('trying server', () => {
   test('cat', () => {
-
     var debug = require('debug')('docker-exec-websocket-server:test');
     var ws = require('ws');
     var Server = require('../lib/server.js');
