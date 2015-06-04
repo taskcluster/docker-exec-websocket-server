@@ -2,4 +2,3 @@ node_modules
 .vagrant
 .env
 *log
-bin

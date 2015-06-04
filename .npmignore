@@ -2,7 +2,7 @@ node_modules
 .vagrant
 .env
 *log
-bin
 Vagrantfile
 vagrant.sh
 startup.sh
+circle.yml

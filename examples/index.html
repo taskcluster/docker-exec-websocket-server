@@ -57,16 +57,28 @@
 
       socket.send('/bin/bash');
 
-      socket.onmessage = function (data) {
+      socket.onmessage = function (msg) {
         //ready message recieved
-        term.write('\x1b[31mWelcome to term.js, dockerized!\x1b[m\r\n');
-        socket.onmessage = function (data) {
+        term.write('\x1b[31mReady\x1b[m\r\n');
+        socket.onmessage = function (msg) {
           var fileReader = new FileReader();
-          // Ignoring the first byte because it contains 01:stdout or 02:stderr
-          fileReader.readAsBinaryString(data.data.slice(1));
+          fileReader.readAsArrayBuffer(msg.data.slice(0,1));
           fileReader.onload = function () {
-            term.write(fileReader.result);
+            if((new Int8Array(fileReader.result))[0] === 100) {
+              fileReader.readAsArrayBuffer(msg.data.slice(1));
+              fileReader.onload = function () {
+                term.write('\r\nProcess exited with code '+(new Int32Array(fileReader.result))[0]+'\r\n');
+              }
+            }
+            else { // Ignoring the first byte because it contains 01:stdout or 02:stderr
+              fileReader.readAsBinaryString(msg.data.slice(1));
+              fileReader.onload = function () {
+                term.write(fileReader.result);
+              }
+            }
           }
+          
+          
         };
       };
 
