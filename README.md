@@ -19,8 +19,17 @@ Client:
 ```js
 var socket = new WebSocket('ws://localhost:<port>/<path>');
 socket.onopen = function() {
-  socket.send('/bin/bash')  //First message sent indicates command for docker exec
-}
+  socket.send('/bin/bash');  //First message sent indicates command for docker exec
+  socket.onmessage = function() {
+    //First message sent is a 'ready' message
+    //Can start sending input now
+    inputStream.pipe(socket);
+    socket.onmessage = function(msg) {
+      //Can start parsing data now
+      outputStream.write(msg.data);
+    };
+  };
+};
 ```
 
 ##Message Types
