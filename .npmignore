@@ -1,0 +1,8 @@
+node_modules
+.vagrant
+.env
+*log
+Vagrantfile
+vagrant.sh
+startup.sh
+circle.yml
