@@ -3,3 +3,6 @@ node_modules
 .env
 *log
 bin
+Vagrantfile
+vagrant.sh
+startup.sh
