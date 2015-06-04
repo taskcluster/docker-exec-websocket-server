@@ -64,21 +64,21 @@
           var fileReader = new FileReader();
           fileReader.readAsArrayBuffer(msg.data.slice(0,1));
           fileReader.onload = function () {
+            
             if((new Int8Array(fileReader.result))[0] === 100) {
               fileReader.readAsArrayBuffer(msg.data.slice(1));
               fileReader.onload = function () {
                 term.write('\r\nProcess exited with code '+(new Int32Array(fileReader.result))[0]+'\r\n');
-              }
+              };
             }
+
             else { // Ignoring the first byte because it contains 01:stdout or 02:stderr
               fileReader.readAsBinaryString(msg.data.slice(1));
               fileReader.onload = function () {
                 term.write(fileReader.result);
-              }
+              };
             }
-          }
-          
-          
+          };
         };
       };
 
