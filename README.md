@@ -7,7 +7,8 @@ Server:
 ```js
 var DockerServer = require('../lib/server.js');
 var dockerServer = new DockerServer({
-  path: '/'+slugid.v4(),    //Path to WebSocket, can be randomized to prevent unauthorized access
+  path: '/'+slugid.v4(),    //Path to WebSocket
+                            //can be randomized to prevent unauthorized access
   port: 8081,               //Port to WebSocket, required
   container: 'servertest',  //Container to inject exec proccess into
   tty: true,                //Whether or not we expect VT100 style output
