@@ -14,7 +14,8 @@ var dockerServer = new DockerServer({
 });
 
 ```
-By default, uses `var dockerSocket = '/var/run/docker.sock';`
+By default, uses `/var/run/docker.sock` to communicate with Docker.
+
 Client: 
 ```js
 var socket = new WebSocket('ws://localhost:<port>/<path>');
@@ -34,8 +35,11 @@ socket.onopen = function() {
 
 ##Message Types
 Messages are prepended with a single byte which contains information about the encoded message.
+
 1: Message was sent through stdout.
+
 2: Message was sent through stderr.
+
 100: Indicates that the process run through exec has exited; payload contains 4 byte little-endian exit code.
 
 ##Testing
