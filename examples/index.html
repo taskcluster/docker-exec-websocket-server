@@ -35,7 +35,7 @@
 <script>
 ;(function() {
   window.onload = function() {
-    var socket = new WebSocket('ws://localhost:8081/a');
+    var socket = new WebSocket('ws://localhost:8081/a?command=%5B%22%2Fbin%2Fbash%22%5D&tty=true');
     socket.onopen = function() {
       var term = new Terminal({
         cols: 80,
@@ -55,16 +55,24 @@
 
       term.open(document.body);
 
-      socket.send('/bin/bash');
+      // socket.send('/bin/bash');
+
+      //socket.binaryType = 'arraybuffer'
 
       socket.onmessage = function (msg) {
         //ready message recieved
         term.write('\x1b[31mReady\x1b[m\r\n');
         socket.onmessage = function (msg) {
+          // if ((new Int8Array(msg.data))[0] === 100) {
+          //   term.write('\r\nProcess exited with code '+(new Int32Array(msg.data.slice(1)))[0]+'\r\n');
+          // }
+          // else {
+          //   term.write(msg.data.slice(1));
+          // }
           var fileReader = new FileReader();
           fileReader.readAsArrayBuffer(msg.data.slice(0,1));
           fileReader.onload = function () {
-            
+
             if((new Int8Array(fileReader.result))[0] === 100) {
               fileReader.readAsArrayBuffer(msg.data.slice(1));
               fileReader.onload = function () {

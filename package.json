@@ -10,6 +10,7 @@
     "babel": "^5.0.9",
     "debug": "^2.1.3",
     "dockerode": "2.1.4",
+    "dockerode-promise": "jonasfj/dockerode-promise#docker-container-proxy",
     "lodash": "^3.9.3",
     "promise": "6.1.0",
     "slugid": "1.0.3",
