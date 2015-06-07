@@ -34,18 +34,11 @@ suite('trying server', () => {
     var passed = false;
     socket.once('message',(message) => {
       debug(message);
-      var buf1 = new Buffer(3);
-      buf1[0] = 0xfa;
-      buf1[1] = 0xff;
-      buf1[2] = 0x0a;
+      var buf1 = new Buffer([0xfa, 0xff, 0x0a]);
       socket.send(buf1, {binary: true, mask: true});
       socket.on('message', (message) => {
-        var buf = new Buffer(5); //looks something like messagecode 0xfa 0xff $(-E option) 0x0a
-        buf[0] = 0x01;
-        buf[1] = 0xfa;
-        buf[2] = 0xff;
-        buf[3] = 0x24;
-        buf[4] = 0x0a;
+        //looks something like messagecode 0xfa 0xff $(-E option) 0x0a
+        var buf = new Buffer([0x01, 0xfa, 0xff, 0x24, 0x0a]); 
         assert(buf.compare(message) === 0, 'message wrong!');
         passed = true;
       });
