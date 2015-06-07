@@ -7,6 +7,7 @@ suite('trying server', () => {
   var assert = require('assert');
   var url = require('url');
   var base = require('taskcluster-base');
+  var msgcode = require('../lib/messagecodes');
 
   var randpath = '/'+slugid.v4();
 
@@ -70,7 +71,7 @@ suite('trying server', () => {
     var passed = false;
     socket.once('message', () => {
       socket.on('message', (message) => {
-        if (message[0] === 0x64 && message.readInt32LE(1) === 9) {
+        if (message[0] === msgcode.stopped && message.readInt32LE(1) === 9) {
           passed = true;
         }
       });

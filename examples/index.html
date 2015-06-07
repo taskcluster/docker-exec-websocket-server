@@ -71,7 +71,7 @@
           fileReader.readAsArrayBuffer(msg.data.slice(0,1));
           fileReader.onload = function () {
 
-            if((new Int8Array(fileReader.result))[0] === 100) {
+            if((new Int8Array(fileReader.result))[0] === 200) {
               fileReader.readAsArrayBuffer(msg.data.slice(1));
               fileReader.onload = function () {
                 term.write('\r\nProcess exited with code '+(new Int32Array(fileReader.result))[0]+'\r\n');
