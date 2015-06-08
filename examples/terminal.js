@@ -17,6 +17,7 @@ async function main() {
     tty: 'true',
     command: '/bin/bash',
   });
+  
   process.stdin.pipe(client.stdin);
   client.stdout.pipe(process.stdout);
   client.stderr.pipe(process.stderr);
