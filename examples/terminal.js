@@ -1,7 +1,7 @@
 var dockerClient = require('../lib/client.js');
-var dockerServer = require('../lib/server.js');
+var DockerServer = require('../lib/server.js');
 
-dockerServer({
+var server = new DockerServer({
   port: 8081,
   containerId: 'servertest',
   path: '/a',
