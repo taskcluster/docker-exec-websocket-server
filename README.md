@@ -37,7 +37,7 @@ client.on('exit', (code) => {
 ```
 
 ##Message Types
-Messages are prepended with a single byte which contains information about the encoded message.
+Messages are prepended with a single byte which contains information about the encoded message. The payload is a `Buffer` in node, or a `UInt8Array` in browserify.
 
 ```js
 // stream related message types (carries a payload)
