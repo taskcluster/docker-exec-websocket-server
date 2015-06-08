@@ -31,14 +31,10 @@ var Promise = require('promise');
       term.open(document.body);
 
       client.stdout.on('data', function (data) {
-        console.log(data);
-        term.write(data);
+        term.write(String.fromCharCode.apply(null, data));
       });
-      console.log(client.stdout.listeners('data'));
-      console.log(client.stderr.listeners('data'));
       client.stderr.on('data', function (data) {
-        console.log(data);
-        term.write(data);
+        term.write(String.fromCharCode.apply(null, data));
       });
 
       client.on('exit', function (code) {

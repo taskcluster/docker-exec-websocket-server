@@ -25,7 +25,7 @@ suite('trying client', () => {
     var passed = false;
     client.stdout.on('data', (message) => {
       var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //looks something like 0xfa 0xff $(-E option) 0x0a
-      debug(message)
+      debug('client recieved %s',new Buffer(message));
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
     });
