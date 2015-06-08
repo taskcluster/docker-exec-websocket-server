@@ -15,7 +15,7 @@ suite('trying server', () => {
     containerId: 'servertest',
     port: 8080,
     path: randpath,
-    log: true,
+    log: false,
   });
   assert(server,'server required!');
   test('cat', async () => {

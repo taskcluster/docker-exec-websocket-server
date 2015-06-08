@@ -10,7 +10,8 @@ suite('trying client', () => {
   var server = new DockerServer({
     port: 8081,
     containerId: 'servertest',
-    path: '/a'
+    path: '/a',
+    log: true
   });
 
   test('cat', async () => {
@@ -21,11 +22,7 @@ suite('trying client', () => {
       tty: 'false',
       command: ['cat','-E'],
     });
-    debug(client);
     var buf1 = new Buffer([0xfa, 0xff, 0x0a]);
-    buf1[0] = 0xfa;
-    buf1[1] = 0xff;
-    buf1[2] = 0x0a;
     client.stdin.write(buf1);
     var passed = false;
     client.stdout.on('data', (message) => {
@@ -37,6 +34,27 @@ suite('trying client', () => {
     await base.testing.poll(async () => {
       assert(passed,'message not recieved')
     }, 20, 250).then(() => {
+      debug('successful');
+    }, err => {throw err; });
+  });
+  test('exit code', async () => {
+    let client = await DockerClient({
+      hostname: 'localhost',
+      port: 8081,
+      pathname: 'a',
+      tty: 'true',
+      command: ['/bin/bash'],
+    });
+    client.stdin.write('exit 9\n');
+    var passed = false;
+    client.on('exit', (code) => {
+      debug(code)
+      assert(code === 9, 'message wrong!');
+      passed = true;
+    });
+    await base.testing.poll(async () => {
+      assert(passed,'exit message not recieved')
+    }, 20, 1000).then(() => {
       debug('successful');
     }, err => {throw err; });
   });
