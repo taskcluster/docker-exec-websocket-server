@@ -11,7 +11,6 @@ var dockerServer = new DockerServer({
                             //can be randomized to prevent unauthorized access
   port: 8081,               //Port to WebSocket, required
   container: 'servertest',  //Container to inject exec proccess into
-  tty: true,                //Whether or not we expect VT100 style output
 });
 
 ```

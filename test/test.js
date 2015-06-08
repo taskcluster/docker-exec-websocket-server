@@ -64,7 +64,7 @@ suite('trying server', () => {
     var passed = false;
     socket.once('message', () => {
       socket.on('message', (message) => {
-        if (message[0] === msgcode.stopped && message.readInt32LE(1) === 9) {
+        if (message[0] === msgcode.stopped && message.readInt8(1) === 9) {
           passed = true;
         }
       });

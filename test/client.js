@@ -52,7 +52,7 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed,'exit message not recieved')
-    }, 20, 1000).then(() => {
+    }, 20, 250).then(() => {
       debug('successful');
     }, err => {throw err; });
   });
