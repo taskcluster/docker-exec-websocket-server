@@ -6,16 +6,16 @@ var DockerServer = require('../lib/server.js');
 var app = express();
 var server = http.createServer(app);
 
-app.use(function(req, res, next) { //some header magic, i don't know what this does
+app.use(function (req, res, next) { //some header magic, i don't know what this does
   var setHeader = res.setHeader;
-  res.setHeader = function(name) {
-  switch (name) {
-    case 'Cache-Control':
-    case 'Last-Modified':
-    case 'ETag':
-    return;
-  }
-  return setHeader.apply(res, arguments);
+  res.setHeader = function (name) {
+    switch (name) {
+        case 'Cache-Control':
+        case 'Last-Modified':
+        case 'ETag':
+        return;
+    }
+    return setHeader.apply(res, arguments);
   };
   next();
 });

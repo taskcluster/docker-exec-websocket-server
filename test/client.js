@@ -9,7 +9,7 @@ suite('trying client', () => {
     port: 8081,
     containerId: 'servertest',
     path: '/a',
-    log: true
+    log: true,
   });
 
   test('cat', async () => {
@@ -18,19 +18,18 @@ suite('trying client', () => {
       port: 8081,
       pathname: 'a',
       tty: 'false',
-      command: ['cat','-E'],
+      command: ['cat', '-E'],
     });
     var buf1 = new Buffer([0xfa, 0xff, 0x0a]);
     client.stdin.write(buf1);
     var passed = false;
     client.stdout.on('data', (message) => {
       var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //looks something like 0xfa 0xff $(-E option) 0x0a
-      debug('client recieved %s',new Buffer(message));
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
     });
     await base.testing.poll(async () => {
-      assert(passed,'message not recieved')
+      assert(passed, 'message not recieved');
     }, 20, 250).then(() => {
       debug('successful');
     }, err => {throw err; });
@@ -46,12 +45,11 @@ suite('trying client', () => {
     client.stdin.write('exit 9\n');
     var passed = false;
     client.on('exit', (code) => {
-      debug(code)
       assert(code === 9, 'message wrong!');
       passed = true;
     });
     await base.testing.poll(async () => {
-      assert(passed,'exit message not recieved')
+      assert(passed, 'exit message not recieved');
     }, 20, 250).then(() => {
       debug('successful');
     }, err => {throw err; });

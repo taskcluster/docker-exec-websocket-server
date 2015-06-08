@@ -4,4 +4,4 @@ mocha \
   test/client.js
 eslint \
   lib/server.js \
-  lib/client.js
+  lib/client.js 

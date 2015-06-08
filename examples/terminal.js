@@ -1,23 +1,22 @@
-var msgcode = require('../lib/messagecodes');
-var DockerClient = require('../lib/client.js');
-var DockerServer = require('../lib/server.js');
+var dockerClient = require('../lib/client.js');
+var dockerServer = require('../lib/server.js');
 
-var server = new DockerServer({
+dockerServer({
   port: 8081,
   containerId: 'servertest',
   path: '/a',
-  log: true
+  log: true,
 });
 
-async function main() {
-  let client = await DockerClient({
+async function main () {
+  let client = await dockerClient({
     hostname: 'localhost',
     port: 8081,
     pathname: 'a',
     tty: 'true',
     command: '/bin/bash',
   });
-  
+
   process.stdin.pipe(client.stdin);
   client.stdout.pipe(process.stdout);
   client.stderr.pipe(process.stderr);

@@ -1,8 +1,6 @@
 require('babel/register');
-var msgcode = require('../lib/messagecodes');
 var DockerClient = require('./babel.js');
-var Promise = require('promise');
-;(function() {
+(function() {
   window.onload = function() {
     DockerClient({
       hostname: 'localhost',
@@ -24,7 +22,7 @@ var Promise = require('promise');
         client.stdin.write(data);
       });
 
-      term.on('title', function(title) { //add support for title changes later maybe?
+      term.on('title', function(title) {
         document.title = title;
       });
 
@@ -42,7 +40,7 @@ var Promise = require('promise');
       });
       client.on('resumed', function () {
         term.write('\x1b[31mReady\x1b[m\r\n');
-      })
+      });
 
     });
   };

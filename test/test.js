@@ -9,7 +9,7 @@ suite('trying server', () => {
   var base = require('taskcluster-base');
   var msgcode = require('../lib/messagecodes');
 
-  var randpath = '/'+slugid.v4();
+  var randpath = '/' + slugid.v4();
 
   var server = new Server({
     containerId: 'servertest',
@@ -17,7 +17,7 @@ suite('trying server', () => {
     path: randpath,
     log: false,
   });
-  assert(server,'server required!');
+  assert(server, 'server required!');
   test('cat', async () => {
     var socket = new ws(url.format({
       protocol: 'ws',
@@ -25,14 +25,14 @@ suite('trying server', () => {
       host: 'localhost:8080',
       pathname: randpath,
       query: {
-        command: encodeURIComponent(JSON.stringify(['cat','-E'])),
+        command: encodeURIComponent(JSON.stringify(['cat', '-E'])),
         tty: false,
       },
     }));
-    assert(socket,'socket connection required!');
+    assert(socket, 'socket connection required!');
 
     var passed = false;
-    socket.once('message',(message) => {
+    socket.once('message', (message) => {
       debug(message);
       var buf1 = new Buffer([0xfa, 0xff, 0x0a]);
       socket.send(buf1, {binary: true, mask: true});
@@ -44,7 +44,7 @@ suite('trying server', () => {
       });
     });
     await base.testing.poll(async () => {
-      assert(passed,'message not recieved')
+      assert(passed,'message not recieved');
     }, 20, 250).then(() => {
       debug('successful');
     }, err => {throw err; });
@@ -60,7 +60,7 @@ suite('trying server', () => {
         tty: true,
       },
     }));
-    assert(socket,'socket connection required!');
+    assert(socket, 'socket connection required!');
     var passed = false;
     socket.once('message', () => {
       socket.on('message', (message) => {
@@ -71,7 +71,7 @@ suite('trying server', () => {
       socket.send('exit 9\n');
     });
     await base.testing.poll(async () => {
-      assert(passed,'timeout');
+      assert(passed, 'timeout');
     }, 20, 250).then(() => {
       debug('successful');
     }, err => {throw err; });
