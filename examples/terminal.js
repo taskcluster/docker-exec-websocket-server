@@ -18,6 +18,7 @@ async function main () {
   });
 
   process.stdin.pipe(client.stdin);
+  client.stdin.write('ls\n');
   client.stdout.pipe(process.stdout);
   client.stderr.pipe(process.stderr);
   client.on('exit', (code) => {

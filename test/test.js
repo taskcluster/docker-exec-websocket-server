@@ -68,7 +68,7 @@ suite('trying server', () => {
           passed = true;
         }
       });
-      socket.send('exit 9\n');
+      socket.send('exit 9\n', {binary: true});
     });
     await base.testing.poll(async () => {
       assert(passed, 'timeout');
