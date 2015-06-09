@@ -68,6 +68,7 @@ suite('trying client', () => {
     var paused = true;
     client.stdin.write('hello\n');
     client.stdout.on('data',(message) => {
+      debug(message);
       assert(!paused, 'message recieved too early');
       assert(message.toString() =='hello\n', 'message recieved was incorrect');
       done();
