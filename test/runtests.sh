@@ -1,6 +1,6 @@
 #!/bin/bash -ve
 mocha \
-  test/client.js
+  test/testclient.js
 eslint \
   lib/server.js \
   lib/client.js 
