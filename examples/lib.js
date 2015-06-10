@@ -17,7 +17,6 @@ var DockerClient = require('./babel.js');
         cursorBlink: false
       });
 
-
       term.on('data', function(data) {
         client.stdin.write(data);
       });
