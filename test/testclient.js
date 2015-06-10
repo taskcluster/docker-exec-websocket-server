@@ -13,13 +13,14 @@ suite('trying client', () => {
   });
 
   test('cat', async () => {
-    let client = await DockerClient({
+    var client = new DockerClient({
       hostname: 'localhost',
       port: 8081,
       pathname: 'a',
-      tty: 'false',
+      tty: false,
       command: ['cat', '-E'],
     });
+    await client.execute();
     var buf1 = new Buffer([0xfa, 0xff, 0x0a]);
     client.stdin.write(buf1);
     var passed = false;
@@ -36,13 +37,14 @@ suite('trying client', () => {
   });
 
   test('exit code', async () => {
-    let client = await DockerClient({
+    var client = new DockerClient({
       hostname: 'localhost',
       port: 8081,
       pathname: 'a',
-      tty: 'true',
+      tty: true,
       command: ['/bin/bash'],
     });
+    await client.execute();
     client.stdin.write('exit 9\n');
     var passed = false;
     client.on('exit', (code) => {
@@ -57,13 +59,14 @@ suite('trying client', () => {
   });
 
   test('server pause', async (done) => {
-    let client = await DockerClient({
+    var client = new DockerClient({
       hostname: 'localhost',
       port: 8081,
       pathname: 'a',
-      tty: 'false',
+      tty: false,
       command: ['cat'],
     });
+    await client.execute();
     client.pause();
     var paused = true;
     client.stdin.write('hello\n');

@@ -10,13 +10,14 @@ var server = new DockerServer({
 });
 
 async function main () {
-  let client = await dockerClient({
+  var client = new dockerClient({
     hostname: 'localhost',
     port: 8081,
     pathname: 'a',
     tty: 'true',
     command: '/bin/bash',
   });
+  await client.execute();
 
   process.stdin.pipe(client.stdin);
   client.stdout.pipe(process.stdout);
