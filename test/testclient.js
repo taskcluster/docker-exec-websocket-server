@@ -34,7 +34,6 @@ suite('trying client', () => {
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
     }, 20, 250).then(() => {
-      debug('successful');
       client.close();
     }, err => {throw err; });
   });
@@ -57,7 +56,6 @@ suite('trying client', () => {
     await base.testing.poll(async () => {
       assert(passed, 'exit message not recieved');
     }, 20, 250).then(() => {
-      debug('successful');
     }, err => {throw err; });
   });
 
@@ -74,7 +72,6 @@ suite('trying client', () => {
     var paused = true;
     client.stdin.write('hello\n');
     client.stdout.on('data', (message) => {
-      debug(message);
       assert(!paused, 'message recieved too early');
       assert(message.toString() =='hello\n', 'message recieved was incorrect');
       client.close();
@@ -107,8 +104,9 @@ suite('trying client', () => {
     await client.execute();
     client2.on('error', (errorStr) => {
       assert(errorStr.toString() === 'Too many sessions active!');
+      client.close();
       done();
     });
     client2.execute();
-  })
+  });
 });
