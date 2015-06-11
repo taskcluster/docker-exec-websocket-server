@@ -12,14 +12,14 @@ var dockerServer = new DockerServer({
   port: 8081,               //Port to WebSocket, required
   container: 'servertest',  //Container to inject exec proccess into
 });
-
+await dockerServer.execute();
 ```
 By default, uses `/var/run/docker.sock` to communicate with Docker.
 
 Client: 
 ```js
 var DockerClient = require('../lib/client.js');
-let client = await DockerClient({
+var client = new DockerClient({
   hostname: 'localhost', //hostname
   port: 8081,
   pathname: 'a',
@@ -28,6 +28,7 @@ let client = await DockerClient({
   tty: 'true', //Whether or not we expect VT100 style output, also enables exit codes
   command: '/bin/bash', //Command to be run, can be an array with options such as ['cat', '-E']
 });
+await client.execute();
 process.stdin.pipe(client.stdin);
 client.stdout.pipe(process.stdout);
 client.stderr.pipe(process.stderr);
@@ -49,7 +50,8 @@ resume: 100, // Process is now ready to receive data
 pause: 101, // Process is processing current data, don't send more right now
 // resolution related message types
 stopped: 200, // Process exited, payload is single byte exit code
-error: 201 // Some internal error occurred sorry, expect undefined behaviour
+shutdown: 201, // Server shut down
+error: 202 // Some internal error occurred, expect undefined behaviour
 ```
 
 ##Testing
