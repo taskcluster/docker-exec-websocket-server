@@ -4,12 +4,14 @@ suite('trying client', () => {
   var DockerServer = require('../lib/server.js');
   var base = require('taskcluster-base');
   var assert = require('assert');
+  var Promise = require('promise');
 
   var server = new DockerServer({
     port: 8081,
     containerId: 'servertest',
     path: '/a',
     log: true,
+    maxSessions: 1,
   });
 
   test('cat', async () => {
@@ -33,6 +35,7 @@ suite('trying client', () => {
       assert(passed, 'message not recieved');
     }, 20, 250).then(() => {
       debug('successful');
+      client.close();
     }, err => {throw err; });
   });
 
@@ -70,20 +73,42 @@ suite('trying client', () => {
     client.pause();
     var paused = true;
     client.stdin.write('hello\n');
-    client.stdout.on('data',(message) => {
+    client.stdout.on('data', (message) => {
       debug(message);
       assert(!paused, 'message recieved too early');
       assert(message.toString() =='hello\n', 'message recieved was incorrect');
+      client.close();
       done();
     });
-    debug('listeners set');
     setTimeout(() => {
-      debug('this one hit');
       paused = false;
       client.resume();
       setTimeout(() => {
         throw new Error('message too slow');
       }, 1000);
     }, 1000);
+  });
+
+  test('connection limit', async (done) => {
+    var client = new DockerClient({
+      hostname: 'localhost',
+      port: 8081,
+      pathname: 'a',
+      tty: false,
+      command: ['cat'],
+    });
+    var client2 = new DockerClient({
+      hostname: 'localhost',
+      port: 8081,
+      pathname: 'a',
+      tty: false,
+      command: ['cat'],
+    });
+    await client.execute();
+    client2.on('error', (errorStr) => {
+      assert(errorStr.toString() === 'Too many sessions active!');
+      done();
+    });
+    client2.execute();
   })
 });
