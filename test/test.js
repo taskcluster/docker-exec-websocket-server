@@ -4,7 +4,6 @@ suite('trying client', () => {
   var DockerServer = require('../lib/server.js');
   var base = require('taskcluster-base');
   var assert = require('assert');
-  var Promise = require('promise');
 
   var server = new DockerServer({
     port: 8081,
