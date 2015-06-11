@@ -9,8 +9,6 @@ suite('trying client', () => {
     port: 8081,
     containerId: 'servertest',
     path: '/a',
-    log: true,
-    maxSessions: 1,
   });
 
   test('cat', async () => {
@@ -86,16 +84,22 @@ suite('trying client', () => {
   });
 
   test('connection limit', async (done) => {
+    let server = new DockerServer({
+      port: 8082,
+      containerId: 'servertest',
+      path: '/a',
+      maxSessions: 1,
+    });
     var client = new DockerClient({
       hostname: 'localhost',
-      port: 8081,
+      port: 8082,
       pathname: 'a',
       tty: false,
       command: ['cat'],
     });
     var client2 = new DockerClient({
       hostname: 'localhost',
-      port: 8081,
+      port: 8082,
       pathname: 'a',
       tty: false,
       command: ['cat'],
@@ -107,5 +111,17 @@ suite('trying client', () => {
       done();
     });
     client2.execute();
+  });
+  test('automatic pausing', async () => {
+    var client = new DockerClient({
+      hostname: 'localhost',
+      port: 8081,
+      pathname: 'a',
+      tty: false,
+      command: ['cat'],
+    });
+    await client.execute();
+    client.stdin.write(new Buffer(8 * 1024 * 1024+1));
+    assert(!client.bufin.write(new Buffer(1)));
   });
 });
