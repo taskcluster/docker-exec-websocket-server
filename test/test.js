@@ -112,6 +112,7 @@ suite('trying client', () => {
     });
     client2.execute();
   });
+  
   test('automatic pausing', async () => {
     var client = new DockerClient({
       hostname: 'localhost',
