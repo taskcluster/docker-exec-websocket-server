@@ -20,11 +20,11 @@ suite('trying client', () => {
       command: ['cat', '-E'],
     });
     await client.execute();
-    var buf1 = new Buffer([0xfa, 0xff, 0x0a]);
+    var buf1 = new Uint8Array([0xfa, 0xff, 0x0a]);
     client.stdin.write(buf1);
     var passed = false;
     client.stdout.on('data', (message) => {
-      var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //looks something like 0xfa 0xff $(-E option) 0x0a
+      var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //0x24 is $ from the -E option
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
     });
@@ -79,8 +79,8 @@ suite('trying client', () => {
       client.resume();
       setTimeout(() => {
         throw new Error('message too slow');
-      }, 1000);
-    }, 1000);
+      }, 500);
+    }, 500);
   });
 
   test('connection limit', async (done) => {
@@ -112,7 +112,7 @@ suite('trying client', () => {
     });
     client2.execute();
   });
-  
+
   test('automatic pausing', async () => {
     var client = new DockerClient({
       hostname: 'localhost',

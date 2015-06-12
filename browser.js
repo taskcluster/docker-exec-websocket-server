@@ -1,3 +1,3 @@
-var DockerClient = require('./lib/babel.js');
+require('babel/polyfill');
 
-module.exports = DockerClient;
+module.exports = require('./lib/client.js');
