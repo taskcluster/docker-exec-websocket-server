@@ -1,5 +1,5 @@
 require('babel/register');
-var DockerClient = require('./babel.js');
+var DockerClient = require('../lib/babel.js');
 (function() {
   window.onload = function() {
     var client = new DockerClient({
