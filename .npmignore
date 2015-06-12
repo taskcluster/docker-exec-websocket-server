@@ -7,3 +7,4 @@ vagrant.sh
 startup.sh
 circle.yml
 examples/browser.js
+.gitignore

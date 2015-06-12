@@ -1,7 +1,6 @@
 #! /bin/bash -vex
 sudo apt-get update
-sudo apt-get install -y build-essential lxc
-# sudo apt-get install -y lxc v4l2loopback-utils build-essential gstreamer0.10-plugins-ugly gstreamer0.10-plugins-good gstreamer0.10-plugins-bad
+sudo apt-get install -y build-essential lxc libfontconfig1
 
 # Install node
 export NODE_VERSION=v0.12.2
