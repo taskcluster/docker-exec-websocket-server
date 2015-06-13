@@ -31,6 +31,7 @@
       // });
 
       test('cat', function (done) {
+        this.timeout(10000);
         var client2 = new DockerExecClient({
           hostname: 'localhost',
           port: 8081,

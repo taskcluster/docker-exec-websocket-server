@@ -1,6 +1,6 @@
 var DockerClient = require('../lib/client.js');
 var DockerServer = require('../lib/server.js');
-var debug = require('debug')('docker-exec-websocket-server:ex/terminal.js');
+var debug = require('debug')('docker-exec-websocket-server:examples/terminal.js');
 
 var server = new DockerServer({
   port: 8081,

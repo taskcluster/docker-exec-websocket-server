@@ -28,5 +28,4 @@ var dockerServer = new DockerServer({
   path: '/a',
   port: 8081,
   containerId: 'servertest',
-  tty: true,
 });

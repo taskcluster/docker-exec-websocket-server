@@ -123,6 +123,6 @@ suite('trying client', () => {
     });
     await client.execute();
     client.stdin.write(new Buffer(8 * 1024 * 1024+1));
-    assert(!client.bufin.write(new Buffer(1)));
+    assert(!client.strbuf.write(new Buffer(1)));
   });
 });
