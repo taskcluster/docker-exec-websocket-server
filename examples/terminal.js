@@ -3,9 +3,7 @@ var DockerServer = require('../lib/server.js');
 var debug = require('debug')('docker-exec-websocket-server:examples/terminal.js');
 
 var server = new DockerServer({
-  port: 8081,
-  containerId: 'servertest',
-  path: '/a',
+  url: 'ws://localhost:8081/a',
   log: true,
 });
 
@@ -15,7 +13,7 @@ async function main () {
     port: 8081,
     pathname: 'a',
     tty: 'true',
-    command: '/bin/bash',
+    command: 'sh',
   });
   await client.execute();
 

@@ -13,9 +13,7 @@ suite('trying client', () => {
 
   test('cat', async () => {
     var client = new DockerClient({
-      hostname: 'localhost',
-      port: 8081,
-      pathname: 'a',
+      url: 'ws://localhost:8081/a',
       tty: false,
       command: ['cat', '-E'],
     });
@@ -37,9 +35,7 @@ suite('trying client', () => {
 
   test('exit code', async () => {
     var client = new DockerClient({
-      hostname: 'localhost',
-      port: 8081,
-      pathname: 'a',
+      url: 'ws://localhost:8081/a',
       tty: true,
       command: ['/bin/bash'],
     });
@@ -58,9 +54,7 @@ suite('trying client', () => {
 
   test('server pause', async (done) => {
     var client = new DockerClient({
-      hostname: 'localhost',
-      port: 8081,
-      pathname: 'a',
+      url: 'ws://localhost:8081/a',
       tty: false,
       command: ['cat'],
     });
@@ -91,16 +85,12 @@ suite('trying client', () => {
       maxSessions: 1,
     });
     var client = new DockerClient({
-      hostname: 'localhost',
-      port: 8082,
-      pathname: 'a',
+      url: 'ws://localhost:8082/a',
       tty: false,
       command: ['cat'],
     });
     var client2 = new DockerClient({
-      hostname: 'localhost',
-      port: 8082,
-      pathname: 'a',
+      url: 'ws://localhost:8082/a',
       tty: false,
       command: ['cat'],
     });
@@ -115,9 +105,7 @@ suite('trying client', () => {
 
   test('automatic pausing', async () => {
     var client = new DockerClient({
-      hostname: 'localhost',
-      port: 8081,
-      pathname: 'a',
+      url: 'ws://localhost:8081/a',
       tty: false,
       command: ['cat'],
     });
