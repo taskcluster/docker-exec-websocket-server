@@ -64,7 +64,7 @@ suite('trying client', () => {
     client.stdin.write('hello\n');
     client.stdout.on('data', (message) => {
       assert(!paused, 'message recieved too early');
-      assert(message.toString() =='hello\n', 'message recieved was incorrect');
+      assert(message.toString() === 'hello\n', 'message recieved was incorrect');
       client.close();
       done();
     });
@@ -78,7 +78,7 @@ suite('trying client', () => {
   });
 
   test('connection limit', async (done) => {
-    let server = new DockerServer({
+    let server2 = new DockerServer({
       port: 8082,
       containerId: 'servertest',
       path: '/a',
@@ -110,7 +110,7 @@ suite('trying client', () => {
       command: ['cat'],
     });
     await client.execute();
-    client.stdin.write(new Buffer(8 * 1024 * 1024+1));
+    client.stdin.write(new Buffer(8 * 1024 * 1024 + 1));
     assert(!client.strbuf.write(new Buffer(1)));
   });
 });
