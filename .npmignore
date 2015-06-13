@@ -8,3 +8,7 @@ startup.sh
 circle.yml
 examples/browser.js
 .gitignore
+*docker-exec-client.js
+test/browserifytest.js
+test/testserver.js
+
