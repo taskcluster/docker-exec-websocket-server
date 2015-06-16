@@ -6,3 +6,4 @@ examples/browserify.js
 *docker-exec-client.js
 test/browserifytest.js
 test/testserver.js
+lib/

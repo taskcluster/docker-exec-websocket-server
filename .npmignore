@@ -10,4 +10,4 @@ circle.yml
 *docker-exec-client.js
 test/browserifytest.js
 test/testserver.js
-
+src/*

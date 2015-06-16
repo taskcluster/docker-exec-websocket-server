@@ -4,5 +4,5 @@ mocha \
   test/test.js
 
 eslint \
-  lib/server.js \
-  lib/client.js 
+  src/server.js \
+  src/client.js 

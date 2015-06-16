@@ -1,8 +1,10 @@
 {
   "name": "docker-exec-websocket-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
-    "test": "./test/runtests.sh"
+    "test": "./test/runtests.sh",
+    "compile": "babel -d lib/ src/",
+    "prepublish": "npm run compile"
   },
   "main": "./lib/server.js",
   "dependencies": {
