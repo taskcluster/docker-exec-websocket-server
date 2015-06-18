@@ -141,7 +141,9 @@ class ExecSession {
       debug('%s is exit code', data.ExitCode);
       this.sendMessage(msgcode.stopped, new Buffer([data.ExitCode]));
       this.close();
-    }).done();
+    }, () => {
+      this.forceClose();
+    });
   }
 
   forceClose () {

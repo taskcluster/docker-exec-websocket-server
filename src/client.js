@@ -13,6 +13,7 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
     this.options = _.defaults({}, options, {
       tty: true,
       command: 'sh',
+      wsopts: {},
     });
   }
 
@@ -34,7 +35,7 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
     debug(this.url);
     assert(/ws?s:\/\//.test(this.url), 'url required or malformed url input');
 
-    this.socket = new WS(this.url);
+    this.socket = new WS(this.url, this.options.wsopts);
     this.socket.binaryType = 'arraybuffer';
     this.socket.onopen = () => {
       debug('socket opened');
