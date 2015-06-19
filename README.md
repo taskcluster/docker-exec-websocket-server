@@ -8,8 +8,7 @@ Server:
 var DockerServer = require('../lib/server.js');
 var dockerServer = new DockerServer({
   path: '/'+slugid.v4(),    //Path to WebSocket
-                            //can be randomized to prevent unauthorized access
-  port: 8081,               //Port to WebSocket, required
+  server: //http.Serv object, can also be https
   container: 'servertest',  //Container to inject exec proccess into
 });
 await dockerServer.execute();
@@ -20,13 +19,10 @@ Client:
 ```js
 var DockerClient = require('../lib/client.js');
 var client = new DockerClient({
-  hostname: 'localhost', //hostname
-  port: 8081,
-  pathname: 'a',
-  //alternatively,
-  url: 'ws://localhost:8081/a' //whole url of websocket
+  url: 'ws://localhost:8081/a' //whole url of websocket, preface with wss if secure
   tty: 'true', //Whether or not we expect VT100 style output, also enables exit codes
   command: '/bin/bash', //Command to be run, can be an array with options such as ['cat', '-E']
+  wsopts: {}, //Pass in websocket options for the underlying websocket
 });
 await client.execute();
 process.stdin.pipe(client.stdin);
