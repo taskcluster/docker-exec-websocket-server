@@ -131,6 +131,10 @@ class ExecSession {
         }
         break;
 
+      case msgcode.end:
+        this.execStream.end();
+        break;
+
       default:
         debug('unknown msg code %s', message[0]);
     }

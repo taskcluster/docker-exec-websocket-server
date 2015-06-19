@@ -19,11 +19,14 @@ suite('trying client', (done) => {
       command: ['cat', '-E'],
     });
     await client.execute();
-    var buf1 = new Uint8Array([0xfa, 0xff, 0x0a]);
+    var buf1 = new Uint8Array([0xfa, 0xff, 0x0a, 0x12]);
     client.stdin.write(buf1);
+    client.stdin.end();
     var passed = false;
     client.stdout.on('data', (message) => {
-      var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //0x24 is $ from the -E option
+      debug('\n\n\nlookie here\n\n\n');
+      debug(message);
+      var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a, 0x12]); //0x24 is $ from the -E option
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
     });

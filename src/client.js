@@ -44,11 +44,16 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
 
     //set state, state does nothing yet
     this.state = msgcode.pause;
-    //stdin stream with pause buffering
+
     this.stdin = through((data) => {
       this.sendMessage(msgcode.stdin, data);
     });
 
+    this.stdin.on('end', () => {
+      this.sendCode(msgcode.end);
+    });
+
+    //stream with pause buffering, everything passes through here first
     this.strbuf = through();
 
     const MAX_OUTSTANDING_BYTES = 8 * 1024 * 1024;
