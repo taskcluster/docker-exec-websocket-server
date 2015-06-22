@@ -1,4 +1,4 @@
-var WS = require('ws');
+var WebSocket = require('ws');
 var debug = require('debug')('docker-exec-websocket-server:lib:client');
 var querystring = require('querystring');
 var events = require('events');
@@ -32,10 +32,16 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
       tty: this.options.tty ? 'true' : 'false',
       command: this.options.command,
     });
-    debug(this.url);
+    console.log(this.url);
     assert(/ws?s:\/\//.test(this.url), 'url required or malformed url input');
 
-    this.socket = new WS(this.url, this.options.wsopts);
+    //Bad browser check hack that will have to do for now
+    if (typeof window === 'undefined') { //means that this is probably node
+      this.socket = new WebSocket(this.url, this.options.wsopts);
+    } else { //means this is probably a browser, which means we ignore options
+      this.socket = new WebSocket(this.url);
+    }
+
     this.socket.binaryType = 'arraybuffer';
     this.socket.onopen = () => {
       debug('socket opened');

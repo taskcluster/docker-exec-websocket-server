@@ -21,7 +21,6 @@ suite('trying client', (done) => {
     await client.execute();
     var buf1 = new Uint8Array([0xfa, 0xff, 0x0a, 0x12]);
     client.stdin.write(buf1);
-    client.stdin.end();
     var passed = false;
     client.stdout.on('data', (message) => {
       debug('\n\n\nlookie here\n\n\n');

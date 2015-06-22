@@ -38,7 +38,7 @@
   window.onload = function() {
     var client = new DockerExecClient({
       url: 'ws://localhost:8081/a',
-      tty: 'true',
+      tty: true,
       command: '/bin/bash',
     });
     client.execute();
