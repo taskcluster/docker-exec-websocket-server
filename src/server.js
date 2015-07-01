@@ -73,14 +73,6 @@ class ExecSession {
       this.messageHandler(message);
     });
 
-    this.socket.on('disconnect', () => {
-      //should be how to ctrl+c ctrl+d, might be better way to kill
-      this.execStream.end('\x03\x04\r\nexit\r\n');
-      debug('client disconnect');
-      //for now, it kills this session
-      this.close();
-    });
-
     this.socket.on('close', () => {
       //should be how to ctrl+c ctrl+d, might be better way to kill
       this.execStream.end('\x03\x04\r\nexit\r\n');
@@ -157,22 +149,25 @@ class ExecSession {
   }
 
   close () {
-    this.server.sessions.splice(this.server.sessions.indexOf(this), 1);
-    debug('%s sessions remain', this.server.sessions.length);
-    this.server.emit('session removed', this.server.sessions.length);
+    var index = this.server.sessions.indexOf(this);
+    if (index > 0) {
+      this.server.sessions.splice(index, 1);
+      debug('%s sessions remain', this.server.sessions.length);
+      this.server.emit('session removed', this.server.sessions.length);
 
-    if (!this.strbuf.paused) {
-      this.socket.close();
-      this.strout.end();
-      this.strerr.end();
-      this.strbuf.end();
-    } else {
-      this.strbuf.on('drain', () => {
+      if (!this.strbuf.paused) {
         this.socket.close();
         this.strout.end();
         this.strerr.end();
         this.strbuf.end();
-      });
+      } else {
+        this.strbuf.on('drain', () => {
+          this.socket.close();
+          this.strout.end();
+          this.strerr.end();
+          this.strbuf.end();
+        });
+      }
     }
   }
 }
