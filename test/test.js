@@ -87,7 +87,7 @@ suite('trying client', (done) => {
     var client = new DockerClient({
       url: 'ws://localhost:8081/a',
       tty: false,
-      command: ['cat'],
+      command: 'cat',
     });
     await client.execute();
     client.pause();

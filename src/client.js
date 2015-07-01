@@ -1,11 +1,12 @@
-var WebSocket = require('ws');
-var debug = require('debug')('docker-exec-websocket-server:lib:client');
-var querystring = require('querystring');
-var events = require('events');
 var _ = require('lodash');
 var assert = require('assert');
+var debug = require('debug')('docker-exec-websocket-server:lib:client');
+var debugdata = require('debug')('docker-exec-websocket-server:lib:rcv');
+var events = require('events');
 var msgcode = require('../lib/messagecodes.js');
+var querystring = require('querystring');
 var through = require('through');
+var WebSocket = require('ws');
 
 export default class DockerExecWebsocketClient extends events.EventEmitter {
   constructor (options) {
@@ -32,7 +33,7 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
       tty: this.options.tty ? 'true' : 'false',
       command: this.options.command,
     });
-    console.log(this.url);
+    debug(this.url);
     assert(/ws?s:\/\//.test(this.url), 'url required or malformed url input');
 
     //Bad browser check hack that will have to do for now
@@ -90,7 +91,7 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
 
   messageHandler (messageEvent) {
     var message = new Buffer(new Uint8Array(messageEvent.data));
-    debug(message);
+    debugdata(message);
     // the first byte is the message code
     switch (message[0]) {
       //pauses the client, causing strbuf to buffer

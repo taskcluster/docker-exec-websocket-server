@@ -1,6 +1,6 @@
 {
   "name": "docker-exec-websocket-server",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "scripts": {
     "test": "./test/runtests.sh",
     "compile": "babel -d lib/ src/",

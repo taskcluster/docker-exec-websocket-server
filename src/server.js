@@ -1,13 +1,14 @@
-var Docker = require('dockerode-promise');
-var debug = require('debug')('docker-exec-websocket-server:lib:server');
-var through = require('through');
-var fs = require('fs');
-var ws = require('ws');
-var slugid = require('slugid');
 var _ = require('lodash');
 var assert = require('assert');
-var url = require('url');
+var debug = require('debug')('docker-exec-websocket-server:lib:server');
+var debugdata = require('debug')('docker-exec-websocket-server:lib:sent');
+var Docker = require('dockerode-promise');
+var fs = require('fs');
 var msgcode = require('./messagecodes.js');
+var slugid = require('slugid');
+var through = require('through');
+var url = require('url');
+var ws = require('ws');
 
 class ExecSession {
   constructor (options) {
@@ -32,7 +33,7 @@ class ExecSession {
   }
 
   async execute () {
-    debug(this.execOptions);
+    //TODO: add error handling support here
     this.exec = await this.container.exec(this.execOptions);
     this.execStream = await this.exec.start(this.attachOptions);
 
@@ -55,8 +56,7 @@ class ExecSession {
 
     this.strbuf.pipe(through((data) => {
       this.outstandingBytes += data.length;
-      debug(data);
-      debug('being sent');
+      debugdata(data);
       this.socket.send(data, {binary: true}, () => {
         this.outstandingBytes -= data.length;
       });
@@ -180,10 +180,13 @@ export default class DockerExecWebsocketServer {
    * as a command.
    * Options:
    * port, required
+   * OR
+   * server, instance of http.Server or https.Server already listening on a port
    * containerId, name or id of docker container, required
    * path, path where the websocket is hosted
    * dockerSocket, path to docker's remote API
    * maxSessions, the maximum number of sessions allowed for one server
+   * wrapperCommand, an optional wrapper script which wraps the command query
    */
    constructor (options) {
     this.options = options = _.defaults({}, options, {path: '/'+slugid.v4(),
@@ -230,10 +233,13 @@ export default class DockerExecWebsocketServer {
       debug('connection recieved');
       if (this.sessions.length < this.options.maxSessions) {
         var args = url.parse(socket.upgradeReq.url, true).query;
+        if (typeof args.command === 'string') {
+          args.command = [args.command];
+        }
         var session = new ExecSession({
           container: container,
           socket: socket,
-          command: args.command,
+          command: (options.wrapperCommand ? options.wrapperCommand : []).concat(args.command),
           tty: /^true$/i.test(args.tty),
           server: this,
         });
