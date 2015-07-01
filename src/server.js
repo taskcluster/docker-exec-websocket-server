@@ -3,6 +3,7 @@ var assert = require('assert');
 var debug = require('debug')('docker-exec-websocket-server:lib:server');
 var debugdata = require('debug')('docker-exec-websocket-server:lib:sent');
 var Docker = require('dockerode-promise');
+var events = require('events');
 var fs = require('fs');
 var msgcode = require('./messagecodes.js');
 var slugid = require('slugid');
@@ -151,13 +152,14 @@ class ExecSession {
   }
 
   forceClose () {
-    //signifies that it was shut down forcefully, may want a better way to express this in protocol
     this.sendCode(msgcode.shutdown);
     this.close();
   }
 
   close () {
     this.server.sessions.splice(this.server.sessions.indexOf(this), 1);
+    debug('%s sessions remain', this.server.sessions.length);
+    this.server.emit('session removed', this.server.sessions.length);
 
     if (!this.strbuf.paused) {
       this.socket.close();
@@ -175,7 +177,7 @@ class ExecSession {
   }
 }
 
-export default class DockerExecWebsocketServer {
+export default class DockerExecWebsocketServer extends events.EventEmitter {
   /* Creates Docker Exec instance on given container, running the first message given
    * as a command.
    * Options:
@@ -189,6 +191,7 @@ export default class DockerExecWebsocketServer {
    * wrapperCommand, an optional wrapper script which wraps the command query
    */
    constructor (options) {
+    super();
     this.options = options = _.defaults({}, options, {path: '/'+slugid.v4(),
       dockerSocket: '/var/run/docker.sock',
       maxSessions: 10,
@@ -246,6 +249,7 @@ export default class DockerExecWebsocketServer {
         this.sessions.push(session);
         session.execute();
         debug('%s sessions created', this.sessions.length);
+        this.emit('session added', this.sessions.length);
       } else {
         socket.send(Buffer.concat([new Buffer([msgcode.error]), new Buffer('Too many sessions active!')]));
       }
@@ -254,7 +258,7 @@ export default class DockerExecWebsocketServer {
 
   close () {
     this.server.close();
-    this.sessions.foreach((session) => {
+    this.sessions.forEach((session) => {
       session.forceClose();
     });
   }

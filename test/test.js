@@ -1,4 +1,4 @@
-suite('trying client', (done) => {
+suite('trying client', () => {
   var debug = require('debug')('docker-exec-websocket-server:test:testclient');
   var DockerClient = require('../lib/client.js');
   var DockerServer = require('../lib/server.js');
@@ -7,10 +7,10 @@ suite('trying client', (done) => {
   var http = require('http');
 
   var serverPort = new DockerServer({
-    port: 8081,
-    containerId: 'servertest',
-    path: '/a',
-  });
+       port: 8081,
+       containerId: 'servertest',
+       path: '/a',
+     });
 
   test('cat on port', async () => {
     var client = new DockerClient({
@@ -23,8 +23,6 @@ suite('trying client', (done) => {
     client.stdin.write(buf1);
     var passed = false;
     client.stdout.on('data', (message) => {
-      debug('\n\n\nlookie here\n\n\n');
-      debug(message);
       var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a, 0x12]); //0x24 is $ from the -E option
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
@@ -61,6 +59,7 @@ suite('trying client', (done) => {
       assert(passed, 'message not recieved');
     }, 20, 250).then(() => {
       client.close();
+      serverServer.close();
     }, err => {throw err; });
   });
 
@@ -143,5 +142,29 @@ suite('trying client', (done) => {
     await client.execute();
     client.stdin.write(new Buffer(8 * 1024 * 1024 + 1));
     assert(!client.strbuf.write(new Buffer(1)));
+    client.close();
   });
+
+  test('session count', async (done) => {
+    var sessionCount;
+    serverPort.once('session added', (num) => {
+      sessionCount = num;
+      serverPort.once('session removed', (newnum) => {
+        assert(num === newnum + 1, 'session count not working properly');
+        done();
+      })
+    })
+    var client = new DockerClient({
+      url: 'ws://localhost:8081/a',
+      tty: false,
+      command: ['cat'],
+    });
+    await client.execute();
+    await new Promise((resolve, reject) => {
+      client.socket.on('open', () => resolve());
+    });
+    client.close();
+  });
+
+  serverPort.close();
 });

@@ -126,6 +126,7 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
 
       case msgcode.shutdown:
         this.emit('shutdown');
+        debug('server has shut down');
         this.close();
         break;
 
