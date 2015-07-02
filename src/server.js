@@ -150,7 +150,7 @@ class ExecSession {
 
   close () {
     var index = this.server.sessions.indexOf(this);
-    if (index > 0) {
+    if (index >= 0) {
       this.server.sessions.splice(index, 1);
       debug('%s sessions remain', this.server.sessions.length);
       this.server.emit('session removed', this.server.sessions.length);
