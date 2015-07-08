@@ -2,13 +2,13 @@ var _ = require('lodash');
 var assert = require('assert');
 var debug = require('debug')('docker-exec-websocket-server:lib:client');
 var debugdata = require('debug')('docker-exec-websocket-server:lib:rcv');
-var events = require('events');
+var EventEmitter = require('events').EventEmitter;
 var msgcode = require('../lib/messagecodes.js');
 var querystring = require('querystring');
 var through = require('through');
 var WebSocket = require('ws');
 
-export default class DockerExecWebsocketClient extends events.EventEmitter {
+export default class DockerExecWebsocketClient extends EventEmitter {
   constructor (options) {
     super();
     this.options = _.defaults({}, options, {
@@ -26,7 +26,6 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
    * or url
    * tty: whether or not we expect VT100 style output
    * command: array or string of command to be run in exec
-   * not supported yet: ssl cert
    */
   async execute () {
     this.url = this.options.url + '?' + querystring.stringify({
@@ -139,7 +138,7 @@ export default class DockerExecWebsocketClient extends events.EventEmitter {
     }
   }
 
-  //pauses input coming in from server, useful if you're running out of memory on local (ie probably never)
+  //pauses input coming in from server, useful if you're running out of memory on local
   pause () {
     this.sendCode(msgcode.pause);
   }

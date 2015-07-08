@@ -7,9 +7,14 @@ Server:
 ```js
 var DockerServer = require('../lib/server.js');
 var dockerServer = new DockerServer({
+  port:8080, //automatically creates http server
+  //OR
+  server: //http.Serv object, can also be https, should already be listening
+
   path: '/'+slugid.v4(),    //Path to WebSocket
-  server: //http.Serv object, can also be https
-  container: 'servertest',  //Container to inject exec proccess into
+  containerId: 'servertest',  //Container to inject exec proccess into
+  dockerSocket: '/var/run/docker.sock' //location of docker remote API socket
+  maxSessions: 10 //maximum number of connected sessions
 });
 await dockerServer.execute();
 ```
@@ -28,10 +33,16 @@ await client.execute();
 process.stdin.pipe(client.stdin);
 client.stdout.pipe(process.stdout);
 client.stderr.pipe(process.stderr);
-client.on('exit', (code) => {
-  process.exit(code);
+client.on('exit', (exitCode) => {
+  //exitCode is a number between 0 and 255
+  process.exit(exitCode);
 });
 ```
+There are also other client events: 
+* `open` signifies the opening of the websocket
+* `pause` and `resume` signify when the server has paused/resumed sending data
+* `shutdown` signifies the server was shut down
+* `error` signifies that some sort of internal error occured, and may carry a utf-8 payload
 
 ##Message Types
 Messages are prepended with a single byte which contains information about the encoded message. The payload is a `Buffer` in node, or a `UInt8Array` in browserify.

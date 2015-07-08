@@ -3,7 +3,7 @@ var assert = require('assert');
 var debug = require('debug')('docker-exec-websocket-server:lib:server');
 var debugdata = require('debug')('docker-exec-websocket-server:lib:sent');
 var Docker = require('dockerode-promise');
-var events = require('events');
+var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
 var msgcode = require('./messagecodes.js');
 var slugid = require('slugid');
@@ -172,7 +172,7 @@ class ExecSession {
   }
 }
 
-export default class DockerExecWebsocketServer extends events.EventEmitter {
+export default class DockerExecWebsocketServer extends EventEmitter {
   /* Creates Docker Exec instance on given container, running the first message given
    * as a command.
    * Options:
