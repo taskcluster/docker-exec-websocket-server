@@ -128,6 +128,13 @@ class ExecSession {
         this.execStream.end();
         break;
 
+      case msgcode.resize:
+        this.exec.resize({
+          h: message.readUInt16LE(1),
+          w: message.readUInt16LE(3),
+        });
+        break;
+
       default:
         debug('unknown msg code %s', message[0]);
     }
