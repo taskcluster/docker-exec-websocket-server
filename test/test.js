@@ -29,9 +29,8 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250).then(() => {
-      client.close();
-    }, err => {throw err; });
+    }, 20, 250);
+    client.close();
   });
 
   test('cat on server', async () => {
@@ -57,10 +56,9 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250).then(() => {
-      client.close();
-      serverServer.close();
-    }, err => {throw err; });
+    }, 20, 250);
+    client.close();
+    serverServer.close();
   });
 
   test('exit code', async () => {
@@ -78,8 +76,7 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'exit message not recieved');
-    }, 20, 250).then(() => {
-    }, err => {throw err; });
+    }, 20, 250);
   });
 
   test('server pause', async (done) => {
@@ -193,9 +190,8 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250).then(() => {
-      client.close();
-    }, err => {throw err; });
+    }, 20, 250);
+    client.close();
   });
 
   serverPort.close();
