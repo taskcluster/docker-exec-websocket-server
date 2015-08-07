@@ -31,8 +31,7 @@
     "term.js": "git://github.com/chjj/term.js.git"
   },
   "engines": {
-    "node": "^0.11.13",
-    "npm": "2.7.x"
+    "node": "^0.12.0"
   },
   "repository": {
     "type": "git",
