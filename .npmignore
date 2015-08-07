@@ -2,8 +2,12 @@ node_modules
 .vagrant
 .env
 *log
-examples/browserify.js
+Vagrantfile
+vagrant.sh
+startup.sh
+circle.yml
+.gitignore
 *docker-exec-client.js
 test/browserifytest.js
 test/testserver.js
-lib/
+src/*

@@ -1,0 +1,65 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script>
+      mocha.ui('tdd');
+      mocha.reporter('html');
+      function assert(assertion, message) {
+        if (!assertion) throw new Error(message);
+      };
+    </script>
+    <script src="../docker-exec-client.js"></script>
+    <script>
+    suite('browserify', function() {
+      // test('make client', function (done) {
+      //   var client = new DockerExecClient({
+      //     hostname: 'localhost',
+      //     port: 8081,
+      //     pathname: 'a',
+      //     tty: 'false',
+      //     command: 'cat',
+      //   });
+      //   client.execute().then(function () {
+      //     client.close();
+      //     done();
+      //   });
+      // });
+
+      test('cat', function (done) {
+        this.timeout(10000);
+        var client2 = new DockerExecClient({
+          hostname: 'localhost',
+          port: 8081,
+          pathname: 'a',
+          tty: 'false',
+          command: ['cat', '-E'],
+        });
+        client2.execute().then(function () {
+          var input = new Uint8Array([0xfa, 0xff, 0x0a]);
+          console.log(input);
+          client2.stdin.write(input);
+          client2.stdout.on('data', function (data) {
+            console.log(output);
+            var output = new Uint8Array(data);
+            assert(output[0] == 0xfa);
+            assert(output[1] == 0xff);
+            assert(output[2] == 0x24);
+            assert(output[3] == 0x0a);
+            done();
+          });
+        });
+      });
+
+    });
+    </script>
+    <script>
+      if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
+      else { mocha.run(); }
+    </script>
+  </body>
+</html>

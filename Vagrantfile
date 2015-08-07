@@ -7,7 +7,8 @@ Vagrant.configure("2") do |config|
   end
 
   # Forwards port 8080 to match host
-  # config.vm.network "forwarded_port", guest: 8080, host: 8080
+  config.vm.network "forwarded_port", guest: 8080, host: 8080
+  config.vm.network "forwarded_port", guest: 8081, host: 8081
   
   # We need to configure docker to expose port 60366
   config.vm.provision "shell", inline: <<-SCRIPT
