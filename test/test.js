@@ -29,9 +29,8 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250).then(() => {
-      client.close();
-    }, err => {throw err; });
+    }, 20, 250);
+    client.close();
   });
 
   test('cat on server', async () => {
@@ -57,10 +56,9 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250).then(() => {
-      client.close();
-      serverServer.close();
-    }, err => {throw err; });
+    }, 20, 250);
+    client.close();
+    serverServer.close();
   });
 
   test('exit code', async () => {
@@ -78,8 +76,7 @@ suite('trying client', () => {
     });
     await base.testing.poll(async () => {
       assert(passed, 'exit message not recieved');
-    }, 20, 250).then(() => {
-    }, err => {throw err; });
+    }, 20, 250);
   });
 
   test('server pause', async (done) => {
@@ -91,17 +88,19 @@ suite('trying client', () => {
     await client.execute();
     client.pause();
     var paused = true;
+    var timer;
     client.stdin.write('hello\n');
     client.stdout.on('data', (message) => {
       assert(!paused, 'message recieved too early');
       assert(message.toString() === 'hello\n', 'message recieved was incorrect');
       client.close();
+      clearTimeout(timer);
       done();
     });
     setTimeout(() => {
       paused = false;
       client.resume();
-      setTimeout(() => {
+      timer = setTimeout(() => {
         throw new Error('message too slow');
       }, 500);
     }, 500);
@@ -163,6 +162,35 @@ suite('trying client', () => {
     await new Promise((resolve, reject) => {
       client.socket.on('open', () => resolve());
     });
+    client.close();
+  });
+
+  test('resize', async () => {
+    var client = new DockerClient({
+      url: 'ws://localhost:8081/a',
+      tty: true,
+      command: ['/bin/bash', '-c', 'sleep 1; ls'],
+    });
+    await client.execute();
+    client.resize(25, 1);
+
+    var passed = false;
+    var byteNum = 0;
+    var buf = new Buffer([0x62, 0x69, 0x6e, 0x0d, 0x0a]);
+    client.stdout.on('data', (message) => {
+      if(!passed) {
+        for(var i=0; i < message.length; i++) {
+          assert(buf[byteNum++] == message[i], 'message wrong');
+          if(byteNum == 5) {
+            passed = true;
+            break;
+          }
+        }
+      }
+    });
+    await base.testing.poll(async () => {
+      assert(passed, 'message not recieved');
+    }, 20, 250);
     client.close();
   });
 

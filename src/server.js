@@ -128,6 +128,17 @@ class ExecSession {
         this.execStream.end();
         break;
 
+      case msgcode.resize:
+        if (this.options.tty) {
+          this.exec.resize({
+            h: message.readUInt16LE(1),
+            w: message.readUInt16LE(3),
+          });
+        } else {
+          this.sendMessage(msgcode.error, new Buffer('cannot resize, not a tty instance'));
+        }
+        break;
+
       default:
         debug('unknown msg code %s', message[0]);
     }

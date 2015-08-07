@@ -148,6 +148,18 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     this.sendCode(msgcode.resume);
   }
 
+  resize (h, w) {
+    if (!this.options.tty) {
+      throw new Error('cannot resize, not a tty instance');
+    } else {
+      var buf = new Buffer(4);
+      buf.writeUInt16LE(h, 0);
+      buf.writeUInt16LE(w, 2);
+      debug('resized to %sx%s', h, w);
+      this.sendMessage(msgcode.resize, buf);
+    }
+  }
+
   sendCode (code) {
     this.strbuf.write(new Buffer([code]), {binary: true});
   }

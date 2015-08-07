@@ -3,6 +3,8 @@ module.exports = {
   stdin: 0,
   stdout: 1,
   stderr: 2,
+  //special message type (carries a payload)
+  resize: 50,
   // data-flow related message types (carries no payload)
   resume: 100, // Process is now ready to receive data
   pause: 101, // Process is processing current data, don't send more right now
