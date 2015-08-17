@@ -7,7 +7,7 @@ var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
 var msgcode = require('./messagecodes.js');
 var slugid = require('slugid');
-var through = require('through');
+var through2 = require('through2');
 var url = require('url');
 var ws = require('ws');
 
@@ -29,8 +29,16 @@ class ExecSession {
       stream: true,
     };
     this.container = options.container;
-    this.socket = options.socket;
     this.server = options.server;
+    this.socket = options.socket;
+
+    //must set this before this.execute() in case of premature close
+    this.socket.on('close', () => {
+      //should be how to ctrl+c ctrl+d, might be better way to kill
+      debug('client close');
+      //for now, it kills this session
+      this.close();
+    });
   }
 
   async execute () {
@@ -39,23 +47,25 @@ class ExecSession {
     this.execStream = await this.exec.start(this.attachOptions);
 
     //handling output
-    this.strout = through((data) => {
+    this.strout = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stdout, new Buffer(data));
+      cb();
     });
 
-    this.strerr = through((data) => {
+    this.strerr = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stderr, new Buffer(data));
+      cb();
     });
 
     this.exec.modem.demuxStream(this.execStream, this.strout, this.strerr);
     //This stream is created solely for the purposes of pausing, because
     //data will only buffer up in streams using this.queue()
-    this.strbuf = through();
+    this.strbuf = through2();
 
     const MAX_OUTSTANDING_BYTES = 8 * 1024 * 1024;
     this.outstandingBytes = 0;
 
-    this.strbuf.pipe(through((data) => {
+    this.strbuf.pipe(through2((data, enc, cb) => {
       this.outstandingBytes += data.length;
       debugdata(data);
       this.socket.send(data, {binary: true}, () => {
@@ -66,6 +76,7 @@ class ExecSession {
       } else {
         this.strbuf.resume();
       }
+      cb();
     }));
 
     //handling input
@@ -140,7 +151,8 @@ class ExecSession {
         break;
 
       default:
-        debug('unknown msg code %s', message[0]);
+        debug('unknown msg code %s; message is %s', message[0], message.length);
+        debug(message);
     }
   }
 

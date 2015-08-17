@@ -5,7 +5,7 @@ var debugdata = require('debug')('docker-exec-websocket-server:lib:rcv');
 var EventEmitter = require('events').EventEmitter;
 var msgcode = require('../lib/messagecodes.js');
 var querystring = require('querystring');
-var through = require('through');
+var through2 = require('through2');
 var WebSocket = require('ws');
 
 export default class DockerExecWebsocketClient extends EventEmitter {
@@ -35,7 +35,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     debug(this.url);
     assert(/ws?s:\/\//.test(this.url), 'url required or malformed url input');
 
-    //Bad browser check hack that will have to do for now
+    //HACK: browser check
     if (typeof window === 'undefined') { //means that this is probably node
       this.socket = new WebSocket(this.url, this.options.wsopts);
     } else { //means this is probably a browser, which means we ignore options
@@ -51,35 +51,40 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     //set state, state does nothing yet
     this.state = msgcode.pause;
 
-    this.stdin = through((data) => {
+    this.stdin = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stdin, data);
-    });
-
-    this.stdin.on('end', () => {
+      cb();
+    }, (cb) => {
       this.sendCode(msgcode.end);
+      cb();
     });
 
-    //stream with pause buffering, everything passes through here first
-    this.strbuf = through();
+    //stream with pause buffering, everything passes thru here first
+    this.strbuf = through2();
 
     const MAX_OUTSTANDING_BYTES = 8 * 1024 * 1024;
     this.outstandingBytes = 0;
 
-    this.strbuf.pause();
-    this.strbuf.pipe(through((data) => {
+    this.strbuf.pipe(through2((data, enc, cb) => {
       this.outstandingBytes += data.length;
       this.socket.send(data, {binary: true}, () => {
         this.outstandingBytes -= data.length;
       });
       if (this.outstandingBytes > MAX_OUTSTANDING_BYTES) {
+        this.state = msgcode.pause;
         this.strbuf.pause();
+        this.emit('paused');
       } else {
+        this.state = msgcode.resume;
         this.strbuf.resume();
+        this.emit('resumed');
       }
+      cb();
     }));
+    this.strbuf.pause();
 
-    this.stdout = through();
-    this.stderr = through();
+    this.stdout = through2();
+    this.stderr = through2();
 
     //Starts out paused so that input isn't sent until server is ready
     this.socket.onmessage = (messageEvent) => {
@@ -161,11 +166,11 @@ export default class DockerExecWebsocketClient extends EventEmitter {
   }
 
   sendCode (code) {
-    this.strbuf.write(new Buffer([code]), {binary: true});
+    this.strbuf.write(new Buffer([code]));
   }
 
   sendMessage (code, data) {
-    this.strbuf.write(Buffer.concat([new Buffer([code]), new Buffer(data)]), {binary: true});
+    this.strbuf.write(Buffer.concat([new Buffer([code]), new Buffer(data)]));
   }
 
   close () {
