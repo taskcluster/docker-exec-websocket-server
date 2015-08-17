@@ -1,37 +1,146 @@
 suite('trying client', () => {
   var debug = require('debug')('docker-exec-websocket-server:test:testclient');
-  var DockerClient = require('../lib/client.js');
-  var DockerServer = require('../lib/server.js');
+  var DockerClient = require('../src/client.js');
+  var DockerServer = require('../src/server.js');
   var base = require('taskcluster-base');
   var assert = require('assert');
   var http = require('http');
+  var fs = require('fs');
+  var Docker = require('dockerode-promise');
 
-  var serverPort = new DockerServer({
-       port: 8081,
-       containerId: 'servertest',
-       path: '/a',
-     });
+  const PORT = 60171;
+  const DOCKER_SOCKET = '/var/run/docker.sock';
 
-  test('cat on port', async () => {
+  // Test that we have a docker socket
+  if (!fs.statSync(DOCKER_SOCKET).isSocket()) {
+    throw new Error('Are you sure the docker is running?');
+  }
+
+  // Setup docker container we can play with
+  var server, dockerServer, container;
+  before(async() => {
+    var docker = new Docker({socketPath: DOCKER_SOCKET});
+
+    // Create docker container
+    container = await docker.createContainer({
+      Image: 'busybox',
+      Cmd: ['sleep', '600']
+    });
+
+    // Start the container
+    await container.start();
+
+    // Start server
+    server = http.createServer();
+    await new Promise(accept => server.listen(PORT, accept));
+
+    // Docker docket socket server
+    dockerServer = new DockerServer({
+      server: server,
+      containerId: container.id,
+      path: '/a',
+    });
+  });
+
+  // Clean up after docker container
+  after(async() => {
+    await container.remove({v: true, force: true});
+    dockerServer.close();
+    server.close();
+  });
+
+
+  test('docker exec true', async () => {
     var client = new DockerClient({
-      url: 'ws://localhost:8081/a',
+      url: 'ws://localhost:' + PORT + '/a',
       tty: false,
-      command: ['cat', '-E'],
+      command: ['sh', '-c', 'true'],
     });
+
+    // Execute command
     await client.execute();
-    var buf1 = new Uint8Array([0xfa, 0xff, 0x0a, 0x12]);
-    client.stdin.write(buf1);
-    var passed = false;
-    client.stdout.on('data', (message) => {
-      var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a, 0x12]); //0x24 is $ from the -E option
-      assert(buf.compare(message) === 0, 'message wrong!');
-      passed = true;
+
+    // Wait for termination
+    var code = await new Promise((accept, reject) => {
+      client.on('exit', accept);
+      client.on('error', reject);
     });
-    await base.testing.poll(async () => {
-      assert(passed, 'message not recieved');
-    }, 20, 250);
+
+    assert(code === 0, 'Expected exit code to be zero');
+
     client.close();
   });
+
+
+  test('docker exec echo test', async () => {
+    var client = new DockerClient({
+      url: 'ws://localhost:' + PORT + '/a',
+      tty: false,
+      command: ['echo', 'test'],
+    });
+
+    // Execute command
+    await client.execute();
+
+    // Read bytes from stdout
+    var data = [];
+    client.stdout.on('data', buf => data.push(buf));
+
+    // Wait for termination
+    var code = await new Promise((accept, reject) => {
+      client.on('exit', accept);
+      client.on('error', reject);
+    });
+    assert(code === 0, 'Expected exit code to be zero');
+
+    // Get all the data we received from stdout
+    var output = Buffer.concat(data);
+
+    // Check that the output is correct
+    assert(output.toString() == "test\n", 'Expected output === "test\\n"');
+
+    client.close();
+  });
+
+
+  test('docker exec wc -c', async () => {
+    var client = new DockerClient({
+      url: 'ws://localhost:' + PORT + '/a',
+      tty: false,
+      command: ['wc', '-c'],
+    });
+
+    // Execute command
+    await client.execute();
+
+    // Write some bytes on stdin to cat, then close stdin
+    var input = new Uint8Array([97, 98, 99]);
+    client.stdin.write(input);
+    client.stdin.end();
+
+    // Read bytes from stdout
+    var stdout = [], stderr = [];
+    client.stdout.on('data', b => stdout.push(b));
+    client.stderr.on('data', b => stderr.push(b));
+
+    // Wait for termination
+    var code = await new Promise((accept, reject) => {
+      client.on('exit', accept);
+      client.on('error', reject);
+    });
+    console.log("Exit code: " + code);
+
+    stdout = Buffer.concat(stdout);
+    stderr = Buffer.concat(stderr);
+    console.log("stdout: '%s'", stdout.toString());
+    console.log("stderr: '%s'", stderr.toString());
+
+    assert(code === 0, 'Expected exit code to be zero');
+
+    client.close();
+  });
+
+  return;
 
   test('cat on server', async () => {
     var httpServ = http.createServer().listen(8083);
@@ -194,5 +303,4 @@ suite('trying client', () => {
     client.close();
   });
 
-  serverPort.close();
 });
