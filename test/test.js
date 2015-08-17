@@ -164,14 +164,11 @@ suite('trying client', () => {
       tty: false,
       command: ['cat'],
     });
-    debug('waiting1')
     await client.execute();
-    debug('waiting2')
 
     await new Promise((resolve, reject) => {
       client.socket.on('open', resolve);
     });
-    debug('waiting3')
     client.close();
   });
 
