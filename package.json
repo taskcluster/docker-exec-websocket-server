@@ -15,7 +15,7 @@
     "lodash": "^3.9.3",
     "promise": "6.1.0",
     "slugid": "1.0.3",
-    "through": "^2.3.7",
+    "through2": "^2.0.0",
     "ws": "^0.7.2"
   },
   "devDependencies": {

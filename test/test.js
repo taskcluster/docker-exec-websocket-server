@@ -1,7 +1,7 @@
 suite('trying client', () => {
   var debug = require('debug')('docker-exec-websocket-server:test:testclient');
-  var DockerClient = require('../lib/client.js');
-  var DockerServer = require('../lib/server.js');
+  var DockerClient = require('../src/client.js');
+  var DockerServer = require('../src/server.js');
   var base = require('taskcluster-base');
   var assert = require('assert');
   var http = require('http');
@@ -20,7 +20,7 @@ suite('trying client', () => {
     });
     await client.execute();
     var buf1 = new Uint8Array([0xfa, 0xff, 0x0a, 0x12]);
-    client.stdin.write(buf1);
+    client.stdin.write(new Buffer(buf1));
     var passed = false;
     client.stdout.on('data', (message) => {
       var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a, 0x12]); //0x24 is $ from the -E option
@@ -47,7 +47,7 @@ suite('trying client', () => {
     });
     await client.execute();
     var buf1 = new Uint8Array([0xfa, 0xff, 0x0a]);
-    client.stdin.write(buf1);
+    client.stdin.write(new Buffer(buf1));
     var passed = false;
     client.stdout.on('data', (message) => {
       var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //0x24 is $ from the -E option
@@ -140,7 +140,13 @@ suite('trying client', () => {
     });
     await client.execute();
     client.stdin.write(new Buffer(8 * 1024 * 1024 + 1));
-    assert(!client.strbuf.write(new Buffer(1)));
+    var passed = false;
+    client.on('paused', () => {
+      passed = true;
+    });
+    await base.testing.poll(async () => {
+      assert(passed, 'not paused');
+    }, 20, 250);
     client.close();
   });
 
@@ -158,10 +164,14 @@ suite('trying client', () => {
       tty: false,
       command: ['cat'],
     });
+    debug('waiting1')
     await client.execute();
+    debug('waiting2')
+
     await new Promise((resolve, reject) => {
-      client.socket.on('open', () => resolve());
+      client.socket.on('open', resolve);
     });
+    debug('waiting3')
     client.close();
   });
 
@@ -179,7 +189,7 @@ suite('trying client', () => {
     var buf = new Buffer([0x62, 0x69, 0x6e, 0x0d, 0x0a]);
     client.stdout.on('data', (message) => {
       if(!passed) {
-        for(var i=0; i < message.length; i++) {
+        for(var i = 0; i < message.length; i++) {
           assert(buf[byteNum++] == message[i], 'message wrong');
           if(byteNum == 5) {
             passed = true;
