@@ -21,11 +21,15 @@ suite('trying client', () => {
   before(async() => {
     var docker = new Docker({socketPath: DOCKER_SOCKET});
 
-    // Create docker container
-    container = await docker.createContainer({
-      Image: 'busybox',
-      Cmd: ['sleep', '600']
-    });
+    await docker.pull('busybox:latest');
+
+    await base.testing.poll(async () => {
+      // Create docker container
+      container = await docker.createContainer({
+        Image: 'busybox',
+        Cmd: ['sleep', '600']
+      });
+    }, 20, 250);
 
     // Start the container
     await container.start();
