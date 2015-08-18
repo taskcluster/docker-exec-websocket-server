@@ -6,7 +6,7 @@ var Docker = require('dockerode-promise');
 var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
 var msgcode = require('./messagecodes.js');
-var through = require('through');
+var through2 = require('through2');
 var url = require('url');
 var ws = require('ws');
 
@@ -30,8 +30,17 @@ class ExecSession {
       stream: true,
     };
     this.container = options.container;
-    this.socket = options.socket;
     this.server = options.server;
+    this.socket = options.socket;
+    this.closed = false;
+
+    //must set this before this.execute() in case of premature close
+    this.socket.on('close', () => {
+      //should be how to ctrl+c ctrl+d, might be better way to kill
+      debug('client close');
+      //for now, it kills this session
+      this.close();
+    });
   }
 
   async execute() {
@@ -41,22 +50,24 @@ class ExecSession {
     //this.execStream = this.execStream.req.socket;
 
     //handling output
-    this.strout = through((data) => {
+    this.strout = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stdout, new Buffer(data));
+      cb();
     });
 
-    this.strerr = through((data) => {
+    this.strerr = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stderr, new Buffer(data));
+      cb();
     });
 
     this.exec.modem.demuxStream(this.execStream, this.strout, this.strerr);
     //This stream is created solely for the purposes of pausing, because
     //data will only buffer up in streams using this.queue()
-    this.strbuf = through();
+    this.strbuf = through2();
 
     this.outstandingBytes = 0;
 
-    this.strbuf.pipe(through((data) => {
+    this.strbuf.pipe(through2((data, enc, cb) => {
       this.outstandingBytes += data.length;
       debugdata(data);
       this.socket.send(data, {binary: true}, () => {
@@ -67,6 +78,7 @@ class ExecSession {
       } else {
         this.strbuf.resume();
       }
+      cb();
     }));
 
     //handling input
@@ -142,7 +154,8 @@ class ExecSession {
         break;
 
       default:
-        debug('unknown msg code %s', message[0]);
+        debug('unknown msg code %s; message is %s', message[0], message.length);
+        debug(message);
     }
   }
 
@@ -159,29 +172,36 @@ class ExecSession {
   }
 
   forceClose() {
-    this.sendCode(msgcode.shutdown);
-    this.close();
+    if (!this.closed) {
+      this.sendCode(msgcode.shutdown);
+      this.close();
+    }
   }
 
   close() {
-    var index = this.server.sessions.indexOf(this);
-    if (index >= 0) {
-      this.server.sessions.splice(index, 1);
-      debug('%s sessions remain', this.server.sessions.length);
-      this.server.emit('session removed', this.server.sessions.length);
+    if (!this.closed) {
+      this.closed = true;
+      var index = this.server.sessions.indexOf(this);
+      if (index >= 0) {
+        this.server.sessions.splice(index, 1);
+        debug('%s sessions remain', this.server.sessions.length);
+        this.server.emit('session removed', this.server.sessions.length);
 
-      if (!this.strbuf.paused) {
-        this.socket.close();
-        this.strout.end();
-        this.strerr.end();
-        this.strbuf.end();
-      } else {
-        this.strbuf.on('drain', () => {
+        if (!this.strbuf.paused) {
           this.socket.close();
           this.strout.end();
           this.strerr.end();
           this.strbuf.end();
-        });
+          this.execStream.removeAllListeners();
+        } else {
+          this.strbuf.on('drain', () => {
+            this.socket.close();
+            this.strout.end();
+            this.strerr.end();
+            this.strbuf.end();
+            this.execStream.removeAllListeners();
+          });
+        }
       }
     }
   }
@@ -218,6 +238,8 @@ export default class DockerExecWebsocketServer extends EventEmitter {
      assert(options.path, 'options.path is required');
      assert(options.wrapperCommand instanceof Array,
             'options.wrapperCommand must be an array!');
+     // Test that we have a docker socket
+     assert(fs.statSync(DOCKER_SOCKET).isSocket(), 'Are you sure the docker is running?')
 
      // Setup docker
      var docker = new Docker({socketPath: options.dockerSocket});
