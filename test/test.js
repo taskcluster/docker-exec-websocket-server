@@ -19,7 +19,7 @@ suite('trying client', () => {
   }
 
   // Setup docker container we can play with
-  var server, dockerServer, container;
+  var dockerServer, dockerServer2, container;
   before(async() => {
     var docker = new Docker({socketPath: DOCKER_SOCKET});
 
@@ -37,7 +37,7 @@ suite('trying client', () => {
     await container.start();
 
     // Start server
-    server = http.createServer();
+    var server = http.createServer();
     await new Promise(accept => server.listen(PORT, accept));
 
     debug(container.id);
@@ -47,12 +47,23 @@ suite('trying client', () => {
       containerId: container.id,
       path: '/a',
     });
+
+    //another server to do the connection limit tests
+    var server2 = http.createServer();
+    await new Promise(accept => server2.listen(8082, accept));
+
+    dockerServer2 = new DockerServer({
+      server: server2,
+      containerId: container.id,
+      path: '/a',
+      maxSessions: 1,
+    });
   });
 
   // Clean up after docker container
   after(async() => {
     dockerServer.close();
-    server.close();
+    dockerServer2.close();
     await container.remove({v: true, force: true});
   });
 
@@ -215,18 +226,6 @@ suite('trying client', () => {
   });
 
   test('connection limit', async (done) => {
-    debug('not crashed yet');
-    var httpServ = http.createServer();
-    debug('not crashed yet');
-    await new Promise(accept => httpServ.listen(8082, accept));
-
-    debug('not crashed yet');
-    let server2 = new DockerServer({
-      server: httpServ,
-      containerId: container.id,
-      path: '/a',
-      maxSessions: 1,
-    });
     var client = new DockerClient({
       url: 'ws://localhost:8082/a',
       tty: false,
@@ -237,14 +236,16 @@ suite('trying client', () => {
       tty: false,
       command: ['cat'],
     });
-    debug('not crashed yet');
     await client.execute();
-    debug('not crashed yet');
 
     client2.on('error', (errorStr) => {
       assert(errorStr.toString() === 'Too many sessions active!');
       client.close();
-      server2.close();
+      // TODO: server isn't closed here due to race condition where client2
+      // isn't finished executing, causing things to be unclosable
+      // Possible solution: There's no way to cancel execute, so we could
+      // emit something on end of execute so the close function knows when to close
+      // That doesn't seem like a very nice solution to me though
       done();
     });
     client2.execute();
@@ -285,10 +286,11 @@ suite('trying client', () => {
   });
 
   test('resize', async () => {
+    //have to give it some time to resize before lsing
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: true,
-      command: ['/bin/bash', '-c', 'sleep 1; ls'],
+      command: ['/bin/bash', '-c', 'sleep 3; ls'],
     });
     await client.execute();
     client.resize(25, 1);
@@ -296,20 +298,27 @@ suite('trying client', () => {
     var passed = false;
     var byteNum = 0;
     var buf = new Buffer([0x62, 0x69, 0x6e, 0x0d, 0x0a]);
+    var res = [];
     client.stdout.on('data', (message) => {
-      if(!passed) {
-        for(var i = 0; i < message.length; i++) {
-          assert(buf[byteNum++] == message[i], 'message wrong');
-          if(byteNum == 5) {
-            passed = true;
-            break;
-          }
-        }
-      }
+      // if(!passed) {
+      //   for(var i = 0; i < message.length; i++) {
+      //     assert(buf[byteNum++] == message[i], 'message wrong');
+      //     if(byteNum == 5) {
+      //       passed = true;
+      //       break;
+      //     }
+      //   }
+      // }
+      res.push(message);
+      if(Buffer.compare(Buffer.concat(res).slice(0,5),buf))
+        passed = true;
+      else
+        debug(Buffer.concat(res));
     });
+
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250);
+    }, 20, 500);
     client.close();
   });
 });

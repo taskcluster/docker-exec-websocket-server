@@ -47,7 +47,6 @@ class ExecSession {
     //TODO: add error handling support here
     this.exec = await this.container.exec(this.execOptions);
     this.execStream = await this.exec.start(this.attachOptions);
-    //this.execStream = this.execStream.req.socket;
 
     //handling output
     this.strout = through2((data, enc, cb) => {
@@ -160,14 +159,16 @@ class ExecSession {
   }
 
   async execStreamEnd() {
-    try {
-      var info = await this.exec.inspect();
-      debug('exit code: %s', info.ExitCode);
-      this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
-      this.close();
-    } catch (err) {
-      debug('Failed to exec.inspect, err: %s, JSON: %j', err, err, err.stack);
-      this.forceClose();
+    if (!this.closed) {
+      try {
+        var info = await this.exec.inspect();
+        debug('exit code: %s', info.ExitCode);
+        this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
+        this.close();
+      } catch (err) {
+        debug('Failed to exec.inspect, err: %s, JSON: %j', err, err, err.stack);
+        this.forceClose();
+      }
     }
   }
 
@@ -237,9 +238,10 @@ export default class DockerExecWebsocketServer extends EventEmitter {
      assert(options.containerId, 'options.containerId is required');
      assert(options.path, 'options.path is required');
      assert(options.wrapperCommand instanceof Array,
-            'options.wrapperCommand must be an array!');
+       'options.wrapperCommand must be an array!');
      // Test that we have a docker socket
-     assert(fs.statSync(DOCKER_SOCKET).isSocket(), 'Are you sure the docker is running?')
+     assert(fs.statSync(this.options.dockerSocket).isSocket(),
+      'Are you sure that docker is running?');
 
      // Setup docker
      var docker = new Docker({socketPath: options.dockerSocket});
