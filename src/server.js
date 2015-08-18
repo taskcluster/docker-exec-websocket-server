@@ -201,77 +201,78 @@ export default class DockerExecWebsocketServer extends EventEmitter {
    *    wrapperCommand: // Optional wrapper script which wraps the command query
    * }
    */
-   constructor(options) {
-    // Initialize base class
-    super();
 
-    // Set default options
-    this.options = options = _.defaults({}, options, {
-      dockerSocket: '/var/run/docker.sock',
-      maxSessions: 10,
-      wrapperCommand: [],
-    });
-    // Validate options
-    assert(options.server, 'options.server is required');
-    assert(options.containerId, 'options.containerId is required');
-    assert(options.path, 'options.path is required');
-    assert(options.wrapperCommand instanceof Array,
-           'options.wrapperCommand must be an array!');
+    constructor(options) {
+     // Initialize base class
+     super();
 
-    // Setup docker
-    var docker = new Docker({socketPath: options.dockerSocket});
+     // Set default options
+     this.options = options = _.defaults({}, options, {
+       dockerSocket: '/var/run/docker.sock',
+       maxSessions: 10,
+       wrapperCommand: [],
+     });
+     // Validate options
+     assert(options.server, 'options.server is required');
+     assert(options.containerId, 'options.containerId is required');
+     assert(options.path, 'options.path is required');
+     assert(options.wrapperCommand instanceof Array,
+            'options.wrapperCommand must be an array!');
 
-    // Get container wrapper
-    this.container = docker.getContainer(options.containerId);
-    assert(this.container, 'could not get container from Docker');
+     // Setup docker
+     var docker = new Docker({socketPath: options.dockerSocket});
 
-    // Setup websocket server
-    this.server = new ws.Server({
-      server: options.server,
-      path: options.path,
-    });
-    debug('websocket server created for path: "%s"', options.path);
+     // Get container wrapper
+     this.container = docker.getContainer(options.containerId);
+     assert(this.container, 'could not get container from Docker');
 
-    // Track sessions
-    this.sessions = [];
+     // Setup websocket server
+     this.server = new ws.Server({
+       server: options.server,
+       path: options.path,
+     });
+     debug('websocket server created for path: "%s"', options.path);
 
-    this.server.on('connection', (socket) => {
-      debug('connection received');
-      this.onConnection(socket);
-    });
-  }
+     // Track sessions
+     this.sessions = [];
 
-  onConnection(socket) {
-    // Reject connection of we're at the session limit
-    if (this.sessions.length >= this.options.maxSessions) {
-      socket.send(Buffer.concat([
-        new Buffer([msgcode.error]),
-        new Buffer('Too many sessions active!'),
-      ]));
-      return socket.close();
-    }
+     this.server.on('connection', (socket) => {
+       debug('connection received');
+       this.onConnection(socket);
+     });
+   }
 
-    // Find arguments from URL
-    var args = url.parse(socket.upgradeReq.url, true).query;
-    if (typeof args.command === 'string') {
-      args.command = [args.command];
-    }
+   onConnection(socket) {
+     // Reject connection of we're at the session limit
+     if (this.sessions.length >= this.options.maxSessions) {
+       socket.send(Buffer.concat([
+         new Buffer([msgcode.error]),
+         new Buffer('Too many sessions active!'),
+       ]));
+       return socket.close();
+     }
 
-    // Construct session
-    var session = new ExecSession({
-      container: this.container,
-      socket: socket,
-      command: this.options.wrapperCommand.concat(args.command),
-      tty: /^true$/i.test(args.tty),
-      server: this,
-    });
+     // Find arguments from URL
+     var args = url.parse(socket.upgradeReq.url, true).query;
+     if (typeof args.command === 'string') {
+       args.command = [args.command];
+     }
 
-    this.sessions.push(session);
-    session.execute();
-    debug('%s sessions created', this.sessions.length);
-    this.emit('session', session);
-    this.emit('session added', this.sessions.length);
-  }
+     // Construct session
+     var session = new ExecSession({
+       container: this.container,
+       socket: socket,
+       command: this.options.wrapperCommand.concat(args.command),
+       tty: /^true$/i.test(args.tty),
+       server: this,
+     });
+
+     this.sessions.push(session);
+     session.execute();
+     debug('%s sessions created', this.sessions.length);
+     this.emit('session', session);
+     this.emit('session added', this.sessions.length);
+   }
 
   close() {
     this.server.close();

@@ -9,7 +9,7 @@ var through = require('through');
 var WebSocket = require('ws');
 
 export default class DockerExecWebsocketClient extends EventEmitter {
-  constructor (options) {
+  constructor(options) {
     super();
     this.options = _.defaults({}, options, {
       tty: true,
@@ -27,7 +27,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
    * tty: whether or not we expect VT100 style output
    * command: array or string of command to be run in exec
    */
-  async execute () {
+  async execute() {
     this.url = this.options.url + '?' + querystring.stringify({
       tty: this.options.tty ? 'true' : 'false',
       command: this.options.command,
@@ -88,7 +88,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     debug('client executed');
   }
 
-  messageHandler (messageEvent) {
+  messageHandler(messageEvent) {
     var message = new Buffer(new Uint8Array(messageEvent.data));
     debugdata(message);
     // the first byte is the message code
@@ -139,16 +139,16 @@ export default class DockerExecWebsocketClient extends EventEmitter {
   }
 
   //pauses input coming in from server, useful if you're running out of memory on local
-  pause () {
+  pause (){
     this.sendCode(msgcode.pause);
   }
 
   //analogue of pause
-  resume () {
+  resume (){
     this.sendCode(msgcode.resume);
   }
 
-  resize (h, w) {
+  resize(h, w) {
     if (!this.options.tty) {
       throw new Error('cannot resize, not a tty instance');
     } else {
@@ -160,15 +160,15 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     }
   }
 
-  sendCode (code) {
+  sendCode(code) {
     this.strbuf.write(new Buffer([code]), {binary: true});
   }
 
-  sendMessage (code, data) {
+  sendMessage(code, data) {
     this.strbuf.write(Buffer.concat([new Buffer([code]), new Buffer(data)]), {binary: true});
   }
 
-  close () {
+  close() {
     if (!this.strbuf.paused) {
       this.socket.close();
       this.stdin.end();
