@@ -105,6 +105,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
         //data will only buffer up in streams using this.queue()
         this.strbuf.pause();
         this.emit('paused');
+        debug('paused');
         break;
 
       //resumes the client, flushing strbuf
@@ -112,6 +113,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
         this.state = msgcode.resume;
         this.strbuf.resume();
         this.emit('resumed');
+        debug('resumed');
         break;
 
       case msgcode.stdout:

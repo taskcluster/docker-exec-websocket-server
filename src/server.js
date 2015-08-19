@@ -49,7 +49,6 @@ class ExecSession {
     //TODO: add error handling support here
     this.exec = await this.container.exec(this.execOptions);
     this.execStream = await this.exec.start(this.attachOptions);
-    debug('before');
     // this.execStream = await new Promise(async (accept, reject) => {
     //   var req = http.request({
     //     socketPath: '/var/run/docker.sock', //replace with generic later
@@ -70,25 +69,30 @@ class ExecSession {
     //   req.on('error', reject);
     //   req.setTimeout(10000, reject);
     // });
-    debug(this.execStream);
+    // debug(this.execStream);
     // this.execStream.write(new Buffer([30]));
 
-    //handling output
-    this.strout = through2((data, enc, cb) => {
-      cb(null, Buffer.concat([new Buffer([msgcode.stdout]), data]))
-    });
+    var header = null;
 
-    this.strerr = through2((data, enc, cb) => {
-      cb(null, Buffer.concat([new Buffer([msgcode.stderr]), data]))
-    });
+    this.execStream.on('readable', () => {
+      header = header || this.execStream.read(8);
+      while (header !== null) {
+        var type = header.readUInt8(0);
+        var payload = this.execStream.read(header.readUInt32BE(4));
+        if (payload) {
+          if (!this.sendMessage(type, payload)) {
+            this.execStream.pause();
+            this.strbuf.on('drain', this.execStream.resume);
+          }
 
-    this.exec.modem.demuxStream(this.execStream, this.strout, this.strerr);
-    this.execStream.resume();
+          //try to set new header to continue reading
+          header = this.execStream.read(8);
+        }
+      }
+    });
     //This stream is created solely for the purposes of pausing, because
     //data will only buffer up in streams using this.queue()
     this.strbuf = through2();
-    this.strerr.pipe(this.strbuf);
-    this.strout.pipe(this.strbuf);
 
     this.outstandingBytes = 0;
 
@@ -100,11 +104,15 @@ class ExecSession {
       });
       if (this.outstandingBytes > MAX_OUTSTANDING_BYTES) {
         this.strbuf.pause();
+        debug('paused');
       } else {
         this.strbuf.resume();
+        debug('resumed');
       }
       cb();
     }));
+
+    this.execStream.resume();
 
     //handling input
     this.socket.on('message', (message) => {
@@ -137,11 +145,11 @@ class ExecSession {
   }
 
   sendCode(code) {
-    this.strbuf.write(new Buffer([code]), {binary: true});
+    return this.strbuf.write(new Buffer([code]), {binary: true});
   }
 
   sendMessage(code, buffer) {
-    this.strbuf.write(Buffer.concat([new Buffer([code]), buffer]), {binary: true});
+    return this.strbuf.write(Buffer.concat([new Buffer([code]), buffer]), {binary: true});
   }
 
   messageHandler(message) {
@@ -172,7 +180,7 @@ class ExecSession {
           this.exec.resize({
             h: message.readUInt16LE(1),
             w: message.readUInt16LE(3),
-          });
+          }).then(debug('\n\n\n ATTENTION\n\n\n'));
         } else {
           this.sendMessage(msgcode.error, new Buffer('cannot resize, not a tty instance'));
         }
@@ -216,15 +224,11 @@ class ExecSession {
 
         if (!this.strbuf.paused) {
           this.socket.close();
-          this.strout.end();
-          this.strerr.end();
           this.strbuf.end();
           this.execStream.removeAllListeners();
         } else {
           this.strbuf.on('drain', () => {
             this.socket.close();
-            this.strout.end();
-            this.strerr.end();
             this.strbuf.end();
             this.execStream.removeAllListeners();
           });
@@ -293,38 +297,38 @@ export default class DockerExecWebsocketServer extends EventEmitter {
    }
 
    onConnection(socket) {
-     // Reject connection of we're at the session limit
-     if (this.sessions.length >= this.options.maxSessions) {
-       socket.send(Buffer.concat([
-         new Buffer([msgcode.error]),
-         new Buffer('Too many sessions active!'),
-       ]));
-       return socket.close();
-     }
+    // Reject connection of we're at the session limit
+    if (this.sessions.length >= this.options.maxSessions) {
+      socket.send(Buffer.concat([
+       new Buffer([msgcode.error]),
+       new Buffer('Too many sessions active!'),
+      ]));
+      return socket.close();
+    }
 
-     // Find arguments from URL
-     var args = url.parse(socket.upgradeReq.url, true).query;
-     if (typeof args.command === 'string') {
-       args.command = [args.command];
-     }
+    // Find arguments from URL
+    var args = url.parse(socket.upgradeReq.url, true).query;
+    if (typeof args.command === 'string') {
+      args.command = [args.command];
+    }
 
-     // Construct session
-     var session = new ExecSession({
+    // Construct session
+    var session = new ExecSession({
        container: this.container,
        socket: socket,
        command: this.options.wrapperCommand.concat(args.command),
        tty: /^true$/i.test(args.tty),
        server: this,
-     });
+    });
 
-     this.sessions.push(session);
-     session.execute().catch((err => {
+    this.sessions.push(session);
+    session.execute().catch(err => {
       debug('Failed to execute session, err: %s, JSON: %j', err, err, err.stack);
-     }));
-       
-     debug('%s sessions created', this.sessions.length);
-     this.emit('session', session);
-     this.emit('session added', this.sessions.length);
+    });
+
+    debug('%s sessions created', this.sessions.length);
+    this.emit('session', session);
+    this.emit('session added', this.sessions.length);
    }
 
   close() {

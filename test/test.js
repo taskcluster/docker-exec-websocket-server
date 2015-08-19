@@ -68,7 +68,7 @@ suite('trying client', () => {
   });
 
 
-  test('docker exec true', async () => {
+  /*test('docker exec true', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -90,7 +90,7 @@ suite('trying client', () => {
   });
 
 
-  /*test('docker exec echo test', async () => {
+  test('docker exec echo test', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -240,7 +240,7 @@ suite('trying client', () => {
 
     client2.on('error', (errorStr) => {
       assert(errorStr.toString() === 'Too many sessions active!');
-      client.close();
+      // client.close();
       // TODO: server isn't closed here due to race condition where client2
       // isn't finished executing, causing things to be unclosable
       // Possible solution: There's no way to cancel execute, so we could
@@ -251,17 +251,19 @@ suite('trying client', () => {
     client2.execute();
   });
 
-  test('automatic pausing', async () => {
+/*  test('automatic pausing', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
-      command: ['cat'],
+      command: ['sleep', '3'],
     });
     await client.execute();
-    client.stdin.write(new Buffer(8 * 1024 * 1024 - 1));
+    client.stdin.write(new Buffer(8 * 1024 * 1024 + 1));
     // assert(!client.strbuf.write(new Buffer(1)));
-    // client.close();
-  });
+    // similar to above problem, can't close client here
+    await base.testing.sleep(1000);
+    client.close();
+  });*/
 
   test('session count', async (done) => {
     var sessionCount;
@@ -290,7 +292,7 @@ suite('trying client', () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: true,
-      command: ['/bin/bash', '-c', 'sleep 3; ls'],
+      command: ['/bin/bash', '-c', 'sleep 4; ls'],
     });
     await client.execute();
     client.resize(25, 1);
@@ -300,20 +302,13 @@ suite('trying client', () => {
     var buf = new Buffer([0x62, 0x69, 0x6e, 0x0d, 0x0a]);
     var res = [];
     client.stdout.on('data', (message) => {
-      // if(!passed) {
-      //   for(var i = 0; i < message.length; i++) {
-      //     assert(buf[byteNum++] == message[i], 'message wrong');
-      //     if(byteNum == 5) {
-      //       passed = true;
-      //       break;
-      //     }
-      //   }
-      // }
       res.push(message);
-      if(Buffer.compare(Buffer.concat(res).slice(0,5),buf))
+      if(!buf.compare(Buffer.concat(res).slice(0, 5))) {
         passed = true;
-      else
-        debug(Buffer.concat(res));
+      }
+      else {
+        debug(Buffer.concat(res).slice(0, 15));
+      }
     });
 
     await base.testing.poll(async () => {
