@@ -5,7 +5,9 @@ var debugdata = require('debug')('docker-exec-server:data');
 var Docker = require('dockerode-promise');
 var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
+var http = require('http');
 var msgcode = require('./messagecodes.js');
+var qs = require('querystring');
 var through2 = require('through2');
 var url = require('url');
 var ws = require('ws');
@@ -24,10 +26,10 @@ class ExecSession {
       Cmd: options.command,
     };
     this.attachOptions = {
+      stream: true,
       stdin: true,
       stdout: true,
       stderr: true,
-      stream: true,
     };
     this.container = options.container;
     this.server = options.server;
@@ -47,22 +49,46 @@ class ExecSession {
     //TODO: add error handling support here
     this.exec = await this.container.exec(this.execOptions);
     this.execStream = await this.exec.start(this.attachOptions);
+    debug('before');
+    // this.execStream = await new Promise(async (accept, reject) => {
+    //   var req = http.request({
+    //     socketPath: '/var/run/docker.sock', //replace with generic later
+    //     path: '/exec/' + this.exec.id + '/start?' + qs.stringify(this.attachOptions),
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Connection': 'upgrade',
+    //       'Upgrade': 'tcp',
+    //     }
+    //   }, reject);
+    //   req.write(JSON.stringify({
+    //     Detach: false,
+    //     Tty: this.options.tty,
+    //   }));
+    //   req.end();
+    //   req.on('upgrade', accept);
+    //   req.on('error', reject);
+    //   req.setTimeout(10000, reject);
+    // });
+    debug(this.execStream);
+    // this.execStream.write(new Buffer([30]));
 
     //handling output
     this.strout = through2((data, enc, cb) => {
-      this.sendMessage(msgcode.stdout, new Buffer(data));
-      cb();
+      cb(null, Buffer.concat([new Buffer([msgcode.stdout]), data]))
     });
 
     this.strerr = through2((data, enc, cb) => {
-      this.sendMessage(msgcode.stderr, new Buffer(data));
-      cb();
+      cb(null, Buffer.concat([new Buffer([msgcode.stderr]), data]))
     });
 
     this.exec.modem.demuxStream(this.execStream, this.strout, this.strerr);
+    this.execStream.resume();
     //This stream is created solely for the purposes of pausing, because
     //data will only buffer up in streams using this.queue()
     this.strbuf = through2();
+    this.strerr.pipe(this.strbuf);
+    this.strout.pipe(this.strbuf);
 
     this.outstandingBytes = 0;
 
@@ -107,7 +133,7 @@ class ExecSession {
 
     //send ready message to let client know it is ready
     this.sendCode(msgcode.resume);
-    debug('server finished executing session');
+    debug('server executed session');
   }
 
   sendCode(code) {
@@ -292,7 +318,10 @@ export default class DockerExecWebsocketServer extends EventEmitter {
      });
 
      this.sessions.push(session);
-     session.execute();
+     session.execute().catch((err => {
+      debug('Failed to execute session, err: %s, JSON: %j', err, err, err.stack);
+     }));
+       
      debug('%s sessions created', this.sessions.length);
      this.emit('session', session);
      this.emit('session added', this.sessions.length);

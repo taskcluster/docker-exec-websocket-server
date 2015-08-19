@@ -68,7 +68,7 @@ suite('trying client', () => {
   });
 
 
-  /*test('docker exec true', async () => {
+  test('docker exec true', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -90,7 +90,7 @@ suite('trying client', () => {
   });
 
 
-  test('docker exec echo test', async () => {
+  /*test('docker exec echo test', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
