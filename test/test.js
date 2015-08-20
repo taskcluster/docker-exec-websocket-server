@@ -251,7 +251,7 @@ suite('trying client', () => {
     client2.execute();
   });
 
-/*  test('automatic pausing', async () => {
+  /*test('automatic pausing', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -292,7 +292,7 @@ suite('trying client', () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: true,
-      command: ['/bin/bash', '-c', 'sleep 4; ls'],
+      command: ['/bin/bash', '-c', 'ls'],
     });
     await client.execute();
     client.resize(25, 1);

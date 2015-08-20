@@ -180,7 +180,7 @@ class ExecSession {
           this.exec.resize({
             h: message.readUInt16LE(1),
             w: message.readUInt16LE(3),
-          }).then(debug('\n\n\n ATTENTION\n\n\n'));
+          });
         } else {
           this.sendMessage(msgcode.error, new Buffer('cannot resize, not a tty instance'));
         }
@@ -253,50 +253,50 @@ export default class DockerExecWebsocketServer extends EventEmitter {
    * }
    */
 
-    constructor(options) {
-     // Initialize base class
-     super();
+   constructor(options) {
+    // Initialize base class
+    super();
 
-     // Set default options
-     this.options = options = _.defaults({}, options, {
-       dockerSocket: '/var/run/docker.sock',
-       maxSessions: 10,
-       wrapperCommand: [],
-     });
-     // Validate options
-     assert(options.server, 'options.server is required');
-     assert(options.containerId, 'options.containerId is required');
-     assert(options.path, 'options.path is required');
-     assert(options.wrapperCommand instanceof Array,
-       'options.wrapperCommand must be an array!');
-     // Test that we have a docker socket
-     assert(fs.statSync(this.options.dockerSocket).isSocket(),
-      'Are you sure that docker is running?');
+    // Set default options
+    this.options = options = _.defaults({}, options, {
+      dockerSocket: '/var/run/docker.sock',
+      maxSessions: 10,
+      wrapperCommand: [],
+    });
+    // Validate options
+    assert(options.server, 'options.server is required');
+    assert(options.containerId, 'options.containerId is required');
+    assert(options.path, 'options.path is required');
+    assert(options.wrapperCommand instanceof Array,
+      'options.wrapperCommand must be an array!');
+    // Test that we have a docker socket
+    assert(fs.statSync(this.options.dockerSocket).isSocket(),
+     'Are you sure that docker is running?');
 
-     // Setup docker
-     var docker = new Docker({socketPath: options.dockerSocket});
+    // Setup docker
+    var docker = new Docker({socketPath: options.dockerSocket});
 
-     // Get container wrapper
-     this.container = docker.getContainer(options.containerId);
-     assert(this.container, 'could not get container from Docker');
+    // Get container wrapper
+    this.container = docker.getContainer(options.containerId);
+    assert(this.container, 'could not get container from Docker');
 
-     // Setup websocket server
-     this.server = new ws.Server({
-       server: options.server,
-       path: options.path,
-     });
-     debug('websocket server created for path: "%s"', options.path);
+    // Setup websocket server
+    this.server = new ws.Server({
+      server: options.server,
+      path: options.path,
+    });
+    debug('websocket server created for path: "%s"', options.path);
 
-     // Track sessions
-     this.sessions = [];
+    // Track sessions
+    this.sessions = [];
 
-     this.server.on('connection', (socket) => {
-       debug('connection received');
-       this.onConnection(socket);
-     });
-   }
+    this.server.on('connection', (socket) => {
+      debug('connection received');
+      this.onConnection(socket);
+    });
+  }
 
-   onConnection(socket) {
+  onConnection(socket) {
     // Reject connection of we're at the session limit
     if (this.sessions.length >= this.options.maxSessions) {
       socket.send(Buffer.concat([
@@ -329,7 +329,7 @@ export default class DockerExecWebsocketServer extends EventEmitter {
     debug('%s sessions created', this.sessions.length);
     this.emit('session', session);
     this.emit('session added', this.sessions.length);
-   }
+  }
 
   close() {
     this.server.close();
