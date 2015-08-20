@@ -79,15 +79,16 @@ class ExecSession {
       while (header !== null) {
         var type = header.readUInt8(0);
         var payload = this.execStream.read(header.readUInt32BE(4));
-        if (payload) {
-          if (!this.sendMessage(type, payload)) {
-            this.execStream.pause();
-            this.strbuf.on('drain', this.execStream.resume);
-          }
-
-          //try to set new header to continue reading
-          header = this.execStream.read(8);
+        if (payload === null) {
+          break;
         }
+        if (!this.sendMessage(type, payload)) {
+          this.execStream.pause();
+          this.strbuf.on('drain', this.execStream.resume);
+        }
+
+        //try to set new header to continue reading
+        header = this.execStream.read(8);
       }
     });
     //This stream is created solely for the purposes of pausing, because
@@ -193,10 +194,10 @@ class ExecSession {
   }
 
   async execStreamEnd() {
+    var info = await this.exec.inspect();
+    debug('exit code: %s', info.ExitCode);
     if (!this.closed) {
       try {
-        var info = await this.exec.inspect();
-        debug('exit code: %s', info.ExitCode);
         this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
         this.close();
       } catch (err) {

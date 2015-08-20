@@ -292,7 +292,7 @@ suite('trying client', () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: true,
-      command: ['/bin/bash', '-c', 'ls'],
+      command: ['/bin/bash', '-c', 'sleep 3; ls'],
     });
     await client.execute();
     client.resize(25, 1);
@@ -308,12 +308,13 @@ suite('trying client', () => {
       }
       else {
         debug(Buffer.concat(res).slice(0, 15));
+        assert(Buffer.concat(res).length <= 5, 'message is wrong, not properly resized');
       }
     });
 
     await base.testing.poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 500);
+    }, 20, 250);
     client.close();
   });
 });
