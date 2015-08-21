@@ -112,7 +112,7 @@ class ExecSession {
         this.socketBuffering = true;
         debug('paused');
       } else {
-        if(!this.clientPause && this.socketBuffering) {
+        if (!this.clientPause && this.socketBuffering) {
           this.strbuf.resume();
           debug('resumed');
         }
@@ -126,8 +126,7 @@ class ExecSession {
     this.socket.on('message', (message) => {
       try {
         this.messageHandler(message);
-      }
-      catch(e) {
+      } catch(e) {
         debug('Error: %s %j, closing connection', e, e, e.stack);
         this.close();
       }
@@ -175,7 +174,7 @@ class ExecSession {
         break;
 
       case msgcode.resume:
-        if(!this.socketBuffering && this.clientPause) {
+        if (!this.socketBuffering && this.clientPause) {
           this.strbuf.resume();
           debug('resumed');
         }
@@ -217,7 +216,7 @@ class ExecSession {
       try {
         this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
         this.strbuf.end();
-        this.strbuf.on('finish', () => {this.close()});
+        this.strbuf.on('finish', () => {this.close(); });
       } catch (err) {
         debug('Failed to exec.inspect, err: %s, JSON: %j', err, err, err.stack);
         this.forceClose();
@@ -240,10 +239,9 @@ class ExecSession {
         this.server.sessions.splice(index, 1);
         debug('%s sessions remain', this.server.sessions.length);
         this.server.emit('session removed', this.server.sessions.length);
-        try {this.execStream.end();} catch(err) {/*ignore*/}
-        try {this.execStream.destroy();} catch(err) {/*ignore*/}
-        try {this.socket.destroy();} catch(err) {/*ignore*/}
-        
+        try {this.execStream.end(); } catch(err) {/*ignore*/}
+        try {this.execStream.destroy(); } catch(err) {/*ignore*/}
+        try {this.socket.destroy(); } catch(err) {/*ignore*/}
       }
     }
   }

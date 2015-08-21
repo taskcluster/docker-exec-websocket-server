@@ -88,14 +88,14 @@ export default class DockerExecWebsocketClient extends EventEmitter {
 
     this.stdout.on('drain', () => {
       this.stdout.draining = false;
-      if(!this.stderr.draining) {
+      if (!this.stderr.draining) {
         this.sendCode(msgcode.resume);
       }
     });
 
     this.stderr.on('drain', () => {
       this.stderr.draining = false;
-      if(!this.stdout.draining) {
+      if (!this.stdout.draining) {
         this.sendCode(msgcode.resume);
       }
     });
@@ -126,14 +126,14 @@ export default class DockerExecWebsocketClient extends EventEmitter {
         break;
 
       case msgcode.stdout:
-        if(!this.stdout.write(message.slice(1))) {
+        if (!this.stdout.write(message.slice(1))) {
           this.sendCode(msgcode.pause);
           this.stdout.draining = true;
         }
         break;
 
       case msgcode.stderr:
-        if(!this.stderr.write(message.slice(1))){
+        if (!this.stderr.write(message.slice(1))) {
           this.sendCode(msgcode.pause);
           this.stderr.draining = true;
         }
