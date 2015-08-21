@@ -8,7 +8,7 @@ var fs = require('fs');
 var http = require('http');
 var msgcode = require('./messagecodes.js');
 var qs = require('querystring');
-var through2 = require('through2');
+var through2 = require('through2').obj;
 var url = require('url');
 var ws = require('ws');
 
@@ -49,6 +49,7 @@ class ExecSession {
     //TODO: add error handling support here
     this.exec = await this.container.exec(this.execOptions);
     this.execStream = await this.exec.start(this.attachOptions);
+    let execStream = this.execStream;
     // this.execStream = await new Promise(async (accept, reject) => {
     //   var req = http.request({
     //     socketPath: '/var/run/docker.sock', //replace with generic later
@@ -74,30 +75,33 @@ class ExecSession {
 
     var header = null;
 
-    this.execStream.on('readable', () => {
-      header = header || this.execStream.read(8);
+    execStream.on('readable', () => {
+      header = header || execStream.read(8);
       while (header !== null) {
         var type = header.readUInt8(0);
-        var payload = this.execStream.read(header.readUInt32BE(4));
+        var payload = execStream.read(header.readUInt32BE(4));
         if (payload === null) {
           break;
         }
         if (!this.sendMessage(type, payload)) {
-          this.execStream.pause();
-          this.strbuf.on('drain', this.execStream.resume);
+          execStream.pause();
+          this.strbuf.once('drain', execStream.resume);
         }
 
         //try to set new header to continue reading
-        header = this.execStream.read(8);
+        header = execStream.read(8);
       }
     });
     //This stream is created solely for the purposes of pausing, because
     //data will only buffer up in streams using this.queue()
-    this.strbuf = through2();
+    // this.strbuf = through2();
 
     this.outstandingBytes = 0;
+    this.socketBuffering = false;
+    this.clientPause = false;
 
-    this.strbuf.pipe(through2((data, enc, cb) => {
+    this.strbuf = through2();
+    this.strbuf.on('data', (data) => {
       this.outstandingBytes += data.length;
       debugdata(data);
       this.socket.send(data, {binary: true}, () => {
@@ -105,38 +109,47 @@ class ExecSession {
       });
       if (this.outstandingBytes > MAX_OUTSTANDING_BYTES) {
         this.strbuf.pause();
+        this.socketBuffering = true;
         debug('paused');
       } else {
-        this.strbuf.resume();
-        debug('resumed');
+        if(!this.clientPause && this.socketBuffering) {
+          this.strbuf.resume();
+          debug('resumed');
+        }
+        this.socketBuffering = false;
       }
-      cb();
-    }));
+    });
 
-    this.execStream.resume();
+    execStream.resume();
 
     //handling input
     this.socket.on('message', (message) => {
-      this.messageHandler(message);
+      try {
+        this.messageHandler(message);
+      }
+      catch(e) {
+        debug('Error: %s %j, closing connection', e, e, e.stack);
+        this.close();
+      }
     });
 
-    this.socket.on('close', () => {
+    /*this.socket.on('close', () => {
       //TODO: this is VERY wrong, we should close stdin, that's all!
       //should be how to ctrl+c ctrl+d, might be better way to kill
-      this.execStream.end('\x03\x04\r\nexit\r\n');
+      execStream.end('\x03\x04\r\nexit\r\n');
       debug('client close');
       //for now, it kills this session
       this.close();
-    });
+    });*/
 
     //start recieving client output again
-    this.execStream.on('drain', () => {
+    execStream.on('drain', () => {
       this.sendCode(msgcode.resume);
       debug('resumed');
     });
 
     //When the process dies, the stream ends
-    this.execStream.on('end', () => {
+    execStream.on('end', () => {
       this.execStreamEnd();
     });
 
@@ -156,13 +169,17 @@ class ExecSession {
   messageHandler(message) {
     switch (message[0]) {
       case msgcode.pause:
+        this.clientPause = true;
         this.strbuf.pause();
         debug('paused');
         break;
 
       case msgcode.resume:
-        this.strbuf.resume();
-        debug('resumed');
+        if(!this.socketBuffering && this.clientPause) {
+          this.strbuf.resume();
+          debug('resumed');
+        }
+        this.clientPause = false;
         break;
 
       case msgcode.stdin:
@@ -199,7 +216,8 @@ class ExecSession {
     if (!this.closed) {
       try {
         this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
-        this.close();
+        this.strbuf.end();
+        this.strbuf.on('finish', () => {this.close()});
       } catch (err) {
         debug('Failed to exec.inspect, err: %s, JSON: %j', err, err, err.stack);
         this.forceClose();
@@ -222,18 +240,10 @@ class ExecSession {
         this.server.sessions.splice(index, 1);
         debug('%s sessions remain', this.server.sessions.length);
         this.server.emit('session removed', this.server.sessions.length);
-
-        if (!this.strbuf.paused) {
-          this.socket.close();
-          this.strbuf.end();
-          this.execStream.removeAllListeners();
-        } else {
-          this.strbuf.on('drain', () => {
-            this.socket.close();
-            this.strbuf.end();
-            this.execStream.removeAllListeners();
-          });
-        }
+        try {this.execStream.end();} catch(err) {/*ignore*/}
+        try {this.execStream.destroy();} catch(err) {/*ignore*/}
+        try {this.socket.destroy();} catch(err) {/*ignore*/}
+        
       }
     }
   }
@@ -254,7 +264,7 @@ export default class DockerExecWebsocketServer extends EventEmitter {
    * }
    */
 
-   constructor(options) {
+  constructor(options) {
     // Initialize base class
     super();
 

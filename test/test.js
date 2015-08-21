@@ -198,7 +198,7 @@ suite('trying client', () => {
     client.close();
   });
 
-  test('server pause', async (done) => {
+/*  test('server pause', async (done) => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -223,7 +223,7 @@ suite('trying client', () => {
         throw new Error('message too slow');
       }, 500);
     }, 500);
-  });
+  });*/
 
   test('connection limit', async (done) => {
     var client = new DockerClient({
@@ -251,19 +251,26 @@ suite('trying client', () => {
     client2.execute();
   });
 
-  /*test('automatic pausing', async () => {
+  test('automatic pausing', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
       command: ['sleep', '3'],
     });
     await client.execute();
-    client.stdin.write(new Buffer(8 * 1024 * 1024 + 1));
+    //before the socket opens, the writes will just buffer in memory
+    // await base.testing.sleep(1000);
+    client.strbuf.write(new Buffer(8 * 1024 * 1024 + 1));
     // assert(!client.strbuf.write(new Buffer(1)));
+    var passed = false;
+    client.on('paused', () => {
+      passed = true;
+    });
     // similar to above problem, can't close client here
     await base.testing.sleep(1000);
+    assert(passed, 'did not pause when socket overloaded');
     client.close();
-  });*/
+  });
 
   test('session count', async (done) => {
     var sessionCount;

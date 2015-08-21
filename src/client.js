@@ -5,7 +5,7 @@ var debugdata = require('debug')('docker-exec-websocket-server:lib:rcv');
 var EventEmitter = require('events').EventEmitter;
 var msgcode = require('../lib/messagecodes.js');
 var querystring = require('querystring');
-var through2 = require('through2');
+var through2 = require('through2').obj;
 var WebSocket = require('ws');
 
 export default class DockerExecWebsocketClient extends EventEmitter {
@@ -48,9 +48,6 @@ export default class DockerExecWebsocketClient extends EventEmitter {
       this.emit('open');
     };
 
-    //set state, state does nothing yet
-    this.state = msgcode.pause;
-
     this.stdin = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stdin, data);
       cb();
@@ -59,34 +56,50 @@ export default class DockerExecWebsocketClient extends EventEmitter {
       cb();
     });
 
-    //stream with pause buffering, everything passes thru here first
-    this.strbuf = through2();
-
     const MAX_OUTSTANDING_BYTES = 8 * 1024 * 1024;
     this.outstandingBytes = 0;
 
-    this.strbuf.pipe(through2((data, enc, cb) => {
+    //stream with pause buffering, everything passes thru here first
+    this.strbuf = through2();
+    this.strbuf.on('data', (data) => {
       this.outstandingBytes += data.length;
+      debug(this.outstandingBytes);
       this.socket.send(data, {binary: true}, () => {
         this.outstandingBytes -= data.length;
+        debug(this.outstandingBytes);
       });
       if (this.outstandingBytes > MAX_OUTSTANDING_BYTES) {
-        this.state = msgcode.pause;
         this.strbuf.pause();
         this.emit('paused');
+        debug('paused');
       } else {
-        this.state = msgcode.resume;
         this.strbuf.resume();
         this.emit('resumed');
+        debug('resumed');
       }
-      cb();
-    }));
+    });
+    //Starts out paused so that input isn't sent until server is ready
     this.strbuf.pause();
 
     this.stdout = through2();
     this.stderr = through2();
+    this.stdout.draining = false;
+    this.stderr.draining = false;
 
-    //Starts out paused so that input isn't sent until server is ready
+    this.stdout.on('drain', () => {
+      this.stdout.draining = false;
+      if(!this.stderr.draining) {
+        this.sendCode(msgcode.resume);
+      }
+    });
+
+    this.stderr.on('drain', () => {
+      this.stderr.draining = false;
+      if(!this.stdout.draining) {
+        this.sendCode(msgcode.resume);
+      }
+    });
+
     this.socket.onmessage = (messageEvent) => {
       this.messageHandler(messageEvent);
     };
@@ -100,9 +113,6 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     switch (message[0]) {
       //pauses the client, causing strbuf to buffer
       case msgcode.pause:
-        this.state = msgcode.pause;
-        //This stream is created solely for the purposes of pausing, because
-        //data will only buffer up in streams using this.queue()
         this.strbuf.pause();
         this.emit('paused');
         debug('paused');
@@ -110,18 +120,23 @@ export default class DockerExecWebsocketClient extends EventEmitter {
 
       //resumes the client, flushing strbuf
       case msgcode.resume:
-        this.state = msgcode.resume;
         this.strbuf.resume();
         this.emit('resumed');
         debug('resumed');
         break;
 
       case msgcode.stdout:
-        this.stdout.write(message.slice(1));
+        if(!this.stdout.write(message.slice(1))) {
+          this.sendCode(msgcode.pause);
+          this.stdout.draining = true;
+        }
         break;
 
       case msgcode.stderr:
-        this.stderr.write(message.slice(1));
+        if(!this.stderr.write(message.slice(1))){
+          this.sendCode(msgcode.pause);
+          this.stderr.draining = true;
+        }
         break;
 
       //first byte contains exit code
@@ -143,16 +158,6 @@ export default class DockerExecWebsocketClient extends EventEmitter {
       default:
         debug('unknown msg code %s', message[0]);
     }
-  }
-
-  //pauses input coming in from server, useful if you're running out of memory on local
-  pause() {
-    this.sendCode(msgcode.pause);
-  }
-
-  //analogue of pause
-  resume() {
-    this.sendCode(msgcode.resume);
   }
 
   resize(h, w) {
