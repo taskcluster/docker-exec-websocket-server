@@ -287,10 +287,6 @@ suite('trying client', () => {
       command: ['cat'],
     });
     await client.execute();
-
-    await new Promise((resolve, reject) => {
-      client.socket.on('open', resolve);
-    });
     client.close();
   });
 

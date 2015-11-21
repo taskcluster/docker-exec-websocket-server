@@ -7,6 +7,7 @@ var msgcode = require('../lib/messagecodes.js');
 var querystring = require('querystring');
 var through2 = require('through2').obj;
 var WebSocket = require('ws');
+var Promise = require('promise');
 
 export default class DockerExecWebsocketClient extends EventEmitter {
   constructor(options) {
@@ -43,10 +44,10 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     }
 
     this.socket.binaryType = 'arraybuffer';
-    this.socket.onopen = () => {
+    this.socket.addEventListener('open', () => {
       debug('socket opened');
       this.emit('open');
-    };
+    });
 
     this.stdin = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stdin, data);
@@ -103,7 +104,12 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     this.socket.onmessage = (messageEvent) => {
       this.messageHandler(messageEvent);
     };
-    debug('client executed');
+    await new Promise((accept, reject) => {
+      this.socket.addEventListener('error', reject);
+      this.socket.addEventListener('open', accept);
+    });
+    this.socket.addEventListener('error', err => this.emit('error', err));
+    debug('client connected');
   }
 
   messageHandler(messageEvent) {
