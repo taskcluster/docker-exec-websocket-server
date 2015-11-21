@@ -5,11 +5,12 @@ var debugdata = require('debug')('docker-exec-websocket-server:lib:rcv');
 var EventEmitter = require('events').EventEmitter;
 var msgcode = require('../lib/messagecodes.js');
 var querystring = require('querystring');
-var through = require('through');
+var through2 = require('through2').obj;
 var WebSocket = require('ws');
+var Promise = require('promise');
 
 export default class DockerExecWebsocketClient extends EventEmitter {
-  constructor (options) {
+  constructor(options) {
     super();
     this.options = _.defaults({}, options, {
       tty: true,
@@ -27,7 +28,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
    * tty: whether or not we expect VT100 style output
    * command: array or string of command to be run in exec
    */
-  async execute () {
+  async execute() {
     this.url = this.options.url + '?' + querystring.stringify({
       tty: this.options.tty ? 'true' : 'false',
       command: this.options.command,
@@ -35,7 +36,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     debug(this.url);
     assert(/ws?s:\/\//.test(this.url), 'url required or malformed url input');
 
-    //Bad browser check hack that will have to do for now
+    //HACK: browser check
     if (typeof window === 'undefined') { //means that this is probably node
       this.socket = new WebSocket(this.url, this.options.wsopts);
     } else { //means this is probably a browser, which means we ignore options
@@ -43,78 +44,105 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     }
 
     this.socket.binaryType = 'arraybuffer';
-    this.socket.onopen = () => {
+    this.socket.addEventListener('open', () => {
       debug('socket opened');
       this.emit('open');
-    };
+    });
 
-    //set state, state does nothing yet
-    this.state = msgcode.pause;
-
-    this.stdin = through((data) => {
+    this.stdin = through2((data, enc, cb) => {
       this.sendMessage(msgcode.stdin, data);
-    });
-
-    this.stdin.on('end', () => {
+      cb();
+    }, (cb) => {
       this.sendCode(msgcode.end);
+      cb();
     });
-
-    //stream with pause buffering, everything passes through here first
-    this.strbuf = through();
 
     const MAX_OUTSTANDING_BYTES = 8 * 1024 * 1024;
     this.outstandingBytes = 0;
 
-    this.strbuf.pause();
-    this.strbuf.pipe(through((data) => {
+    //stream with pause buffering, everything passes thru here first
+    this.strbuf = through2();
+    this.strbuf.on('data', (data) => {
       this.outstandingBytes += data.length;
+      debug(this.outstandingBytes);
       this.socket.send(data, {binary: true}, () => {
         this.outstandingBytes -= data.length;
+        debug(this.outstandingBytes);
       });
       if (this.outstandingBytes > MAX_OUTSTANDING_BYTES) {
         this.strbuf.pause();
+        this.emit('paused');
+        debug('paused');
       } else {
         this.strbuf.resume();
+        this.emit('resumed');
+        debug('resumed');
       }
-    }));
-
-    this.stdout = through();
-    this.stderr = through();
-
+    });
     //Starts out paused so that input isn't sent until server is ready
+    this.strbuf.pause();
+
+    this.stdout = through2();
+    this.stderr = through2();
+    this.stdout.draining = false;
+    this.stderr.draining = false;
+
+    this.stdout.on('drain', () => {
+      this.stdout.draining = false;
+      if (!this.stderr.draining) {
+        this.sendCode(msgcode.resume);
+      }
+    });
+
+    this.stderr.on('drain', () => {
+      this.stderr.draining = false;
+      if (!this.stdout.draining) {
+        this.sendCode(msgcode.resume);
+      }
+    });
+
     this.socket.onmessage = (messageEvent) => {
       this.messageHandler(messageEvent);
     };
-    debug('client executed');
+    await new Promise((accept, reject) => {
+      this.socket.addEventListener('error', reject);
+      this.socket.addEventListener('open', accept);
+    });
+    this.socket.addEventListener('error', err => this.emit('error', err));
+    debug('client connected');
   }
 
-  messageHandler (messageEvent) {
+  messageHandler(messageEvent) {
     var message = new Buffer(new Uint8Array(messageEvent.data));
     debugdata(message);
     // the first byte is the message code
     switch (message[0]) {
       //pauses the client, causing strbuf to buffer
       case msgcode.pause:
-        this.state = msgcode.pause;
-        //This stream is created solely for the purposes of pausing, because
-        //data will only buffer up in streams using this.queue()
         this.strbuf.pause();
         this.emit('paused');
+        debug('paused');
         break;
 
       //resumes the client, flushing strbuf
       case msgcode.resume:
-        this.state = msgcode.resume;
         this.strbuf.resume();
         this.emit('resumed');
+        debug('resumed');
         break;
 
       case msgcode.stdout:
-        this.stdout.write(message.slice(1));
+        if (!this.stdout.write(message.slice(1))) {
+          this.sendCode(msgcode.pause);
+          this.stdout.draining = true;
+        }
         break;
 
       case msgcode.stderr:
-        this.stderr.write(message.slice(1));
+        if (!this.stderr.write(message.slice(1))) {
+          this.sendCode(msgcode.pause);
+          this.stderr.draining = true;
+        }
         break;
 
       //first byte contains exit code
@@ -138,17 +166,7 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     }
   }
 
-  //pauses input coming in from server, useful if you're running out of memory on local
-  pause () {
-    this.sendCode(msgcode.pause);
-  }
-
-  //analogue of pause
-  resume () {
-    this.sendCode(msgcode.resume);
-  }
-
-  resize (h, w) {
+  resize(h, w) {
     if (!this.options.tty) {
       throw new Error('cannot resize, not a tty instance');
     } else {
@@ -160,15 +178,15 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     }
   }
 
-  sendCode (code) {
-    this.strbuf.write(new Buffer([code]), {binary: true});
+  sendCode(code) {
+    this.strbuf.write(new Buffer([code]));
   }
 
-  sendMessage (code, data) {
-    this.strbuf.write(Buffer.concat([new Buffer([code]), new Buffer(data)]), {binary: true});
+  sendMessage(code, data) {
+    this.strbuf.write(Buffer.concat([new Buffer([code]), new Buffer(data)]));
   }
 
-  close () {
+  close() {
     if (!this.strbuf.paused) {
       this.socket.close();
       this.stdin.end();
