@@ -29,7 +29,6 @@
     "operator-assignment": [2, "always"],
     "semi": [2, "always"],
     "brace-style": [2, "1tbs", { "allowSingleLine": true }],
-    "default-case": 2,
     "no-eq-null": 2,
     "no-floating-decimal": 2,
     "no-self-compare": 2,
