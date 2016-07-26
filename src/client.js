@@ -6,8 +6,10 @@ var EventEmitter = require('events').EventEmitter;
 var msgcode = require('../lib/messagecodes.js');
 var querystring = require('querystring');
 var through2 = require('through2').obj;
-var WebSocket = require('ws');
+var WS = require('ws');
 var Promise = require('promise');
+
+var BROWSER = typeof window === 'undefined';
 
 export default class DockerExecWebsocketClient extends EventEmitter {
   constructor(options) {
@@ -37,8 +39,8 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     assert(/ws?s:\/\//.test(this.url), 'url required or malformed url input');
 
     //HACK: browser check
-    if (typeof window === 'undefined') { //means that this is probably node
-      this.socket = new WebSocket(this.url, this.options.wsopts);
+    if (BROWSER) { //means that this is probably node
+      this.socket = new WS(this.url, this.options.wsopts);
     } else { //means this is probably a browser, which means we ignore options
       this.socket = new WebSocket(this.url);
     }
@@ -65,10 +67,16 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     this.strbuf.on('data', (data) => {
       this.outstandingBytes += data.length;
       debug(this.outstandingBytes);
-      this.socket.send(data, {binary: true}, () => {
+      if (BROWSER) {
+        this.socket.send(data, {binary: true}, () => {
+          this.outstandingBytes -= data.length;
+          debug(this.outstandingBytes);
+        });
+      } else {
+        this.socket.send(data);
         this.outstandingBytes -= data.length;
         debug(this.outstandingBytes);
-      });
+      }
       if (this.outstandingBytes > MAX_OUTSTANDING_BYTES) {
         this.strbuf.pause();
         this.emit('paused');
