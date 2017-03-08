@@ -1,9 +1,13 @@
 # docker-exec-websocket-server
+
+[![Build Status](https://travis-ci.org/taskcluster/docker-exec-websocket-server.svg?branch=master)](https://travis-ci.org/taskcluster/docker-exec-websocket-server)
+
 ##Purpose
-A server that serves the results of docker exec over websockets. 
+A server that serves the results of docker exec over websockets.
 
 ##Usage
-Server: 
+Server:
+
 ```js
 var DockerServer = require('../lib/server.js');
 var dockerServer = new DockerServer({
@@ -20,7 +24,8 @@ await dockerServer.execute();
 ```
 By default, uses `/var/run/docker.sock` to communicate with Docker.
 
-Client: 
+Client:
+
 ```js
 var DockerClient = require('../lib/client.js');
 var client = new DockerClient({
@@ -38,7 +43,7 @@ client.on('exit', (exitCode) => {
   process.exit(exitCode);
 });
 ```
-There are also other client events: 
+There are also other client events:
 * `open` signifies the opening of the websocket
 * `pause` and `resume` signify when the server has paused/resumed sending data
 * `shutdown` signifies the server was shut down
