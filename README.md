@@ -2,10 +2,10 @@
 
 [![Build Status](https://travis-ci.org/taskcluster/docker-exec-websocket-server.svg?branch=master)](https://travis-ci.org/taskcluster/docker-exec-websocket-server)
 
-##Purpose
+## Purpose
 A server that serves the results of docker exec over websockets.
 
-##Usage
+## Usage
 Server:
 
 ```js
@@ -49,7 +49,7 @@ There are also other client events:
 * `shutdown` signifies the server was shut down
 * `error` signifies that some sort of internal error occured, and may carry a utf-8 payload
 
-##Message Types
+## Message Types
 Messages are prepended with a single byte which contains information about the encoded message. The payload is a `Buffer` in node, or a `UInt8Array` in browserify.
 
 ```js
@@ -66,5 +66,5 @@ shutdown: 201, // Server shut down
 error: 202 // Some internal error occurred, expect undefined behaviour
 ```
 
-##Testing
+## Testing
 Docker 1.6.1 or above must be installed with a container named `servertest` running with `cat` and `/bin/bash` capabilities to inject the exec process into. From there, `npm test` will carry out the test.
