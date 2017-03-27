@@ -67,4 +67,5 @@ error: 202 // Some internal error occurred, expect undefined behaviour
 ```
 
 ## Testing
+
 Docker 1.6.1 or above must be installed with a container named `servertest` running with `cat` and `/bin/bash` capabilities to inject the exec process into. From there, `npm test` will carry out the test.
