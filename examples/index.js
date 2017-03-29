@@ -26,6 +26,7 @@ server.listen(8080);
 
 var dockerServer = new DockerServer({
   path: '/a',
-  port: 8081,
+  port: 8080,
   containerId: 'servertest',
+  server: server,
 });
