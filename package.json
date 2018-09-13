@@ -33,7 +33,7 @@
     "term.js": "git://github.com/chjj/term.js.git"
   },
   "engines": {
-    "node": ">8"
+    "node": ">8.0"
   },
   "repository": {
     "type": "git",
