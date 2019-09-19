@@ -1,14 +1,14 @@
 suite('trying client', () => {
-  var debug = require('debug')('docker-exec-websocket-server:test:testclient');
   var DockerClient = require('../src/client.js');
   var DockerServer = require('../src/server.js');
-  var base = require('taskcluster-base');
   var assert = require('assert');
   var Docker = require('dockerode-promise');
   var fs = require('fs');
   var http = require('http');
   var fs = require('fs');
   var Docker = require('dockerode-promise');
+  var sleep = require('./sleep');
+  var poll = require('./poll');
 
   const PORT = 60171;
   const DOCKER_SOCKET = '/var/run/docker.sock';
@@ -25,13 +25,13 @@ suite('trying client', () => {
 
     await docker.pull('ubuntu');
 
-    await base.testing.poll(async () => {
+    await poll(async () => {
       // Create docker container
       container = await docker.createContainer({
         Image: 'ubuntu',
         Cmd: ['sleep', '600']
       });
-    }, 20, 250);
+    }, 40, 500);
 
     // Start the container
     await container.start();
@@ -40,7 +40,6 @@ suite('trying client', () => {
     var server = http.createServer();
     await new Promise(accept => server.listen(PORT, accept));
 
-    debug(container.id);
     // Docker docket socket server
     dockerServer = new DockerServer({
       server: server,
@@ -173,9 +172,9 @@ suite('trying client', () => {
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
     });
-    await base.testing.poll(async () => {
+    await poll(async () => {
       assert(passed, 'message not recieved');
-    }, 20, 250);
+    }, 40, 500);
     client.close();
   });
 
@@ -192,9 +191,9 @@ suite('trying client', () => {
       assert(code === 9, 'message wrong!');
       passed = true;
     });
-    await base.testing.poll(async () => {
+    await poll(async () => {
       assert(passed, 'exit message not recieved');
-    }, 20, 250);
+    }, 40, 500);
     client.close();
   });
 
@@ -259,7 +258,7 @@ suite('trying client', () => {
     });
     await client.execute();
     //before the socket opens, the writes will just buffer in memory
-    // await base.testing.sleep(1000);
+    // await sleep(1000);
     client.strbuf.write(new Buffer(8 * 1024 * 1024 + 1));
     // assert(!client.strbuf.write(new Buffer(1)));
     var passed = false;
@@ -267,7 +266,7 @@ suite('trying client', () => {
       passed = true;
     });
     // similar to above problem, can't close client here
-    await base.testing.sleep(1000);
+    await sleep(1000);
     assert(passed, 'did not pause when socket overloaded');
     client.close();
   });
@@ -315,9 +314,9 @@ suite('trying client', () => {
       }
     });
 
-    await base.testing.poll(async () => {
-      assert(passed, 'message not recieved');
-    }, 20, 250);
+    await poll(async () => {
+      assert(passed, 'message not received');
+    }, 40, 500);
     client.close();
   });
 });

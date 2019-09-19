@@ -1,6 +1,8 @@
 {
-  // https://medium.com/@dan_abramov/lint-like-it-s-2015-6987d44c5b48
-  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaVersion": 8,
+    "ecmaFeatures": "impliedStrict"
+  },
 
   "env": {
     "node": true,

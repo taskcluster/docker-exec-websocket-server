@@ -245,7 +245,7 @@ class ExecSession {
   }
 }
 
-export default class DockerExecWebsocketServer extends EventEmitter {
+class DockerExecWebsocketServer extends EventEmitter {
   /* Creates Docker Exec instance on given container,
    * running the first message given as a command.
    *
@@ -345,3 +345,5 @@ export default class DockerExecWebsocketServer extends EventEmitter {
     });
   }
 }
+
+module.exports = DockerExecWebsocketServer;

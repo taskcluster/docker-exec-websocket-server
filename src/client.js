@@ -3,7 +3,7 @@ var assert = require('assert');
 var debug = require('debug')('docker-exec-websocket-server:lib:client');
 var debugdata = require('debug')('docker-exec-websocket-server:lib:rcv');
 var EventEmitter = require('events').EventEmitter;
-var msgcode = require('../lib/messagecodes.js');
+var msgcode = require('./messagecodes.js');
 var querystring = require('querystring');
 var through2 = require('through2').obj;
 var WS = require('ws');
@@ -11,7 +11,7 @@ var Promise = require('promise');
 
 var BROWSER = typeof window === 'undefined';
 
-export default class DockerExecWebsocketClient extends EventEmitter {
+class DockerExecWebsocketClient extends EventEmitter {
   constructor(options) {
     super();
     this.options = _.defaults({}, options, {
@@ -212,3 +212,5 @@ export default class DockerExecWebsocketClient extends EventEmitter {
     }
   }
 }
+
+module.exports = DockerExecWebsocketClient;
