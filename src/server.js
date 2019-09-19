@@ -297,13 +297,13 @@ class DockerExecWebsocketServer extends EventEmitter {
     // Track sessions
     this.sessions = [];
 
-    this.server.on('connection', (socket) => {
+    this.server.on('connection', (socket, request) => {
       debug('connection received');
-      this.onConnection(socket);
+      this.onConnection(socket, request);
     });
   }
 
-  onConnection(socket) {
+  onConnection(socket, request) {
     // Reject connection of we're at the session limit
     if (this.sessions.length >= this.options.maxSessions) {
       socket.send(Buffer.concat([
@@ -314,7 +314,7 @@ class DockerExecWebsocketServer extends EventEmitter {
     }
 
     // Find arguments from URL
-    var args = url.parse(socket.upgradeReq.url, true).query;
+    var args = url.parse(request.url, true).query;
     if (typeof args.command === 'string') {
       args.command = [args.command];
     }

@@ -4,5 +4,4 @@
 docker run --rm  --name testserver ubuntu sleep 60 &
 trap "docker kill testserver;" EXIT; sleep 1;
 
-mocha \
-  test/test.js
+mocha --exit test/test.js
