@@ -1,3 +1,5 @@
+const {suite, test, before, after} = require('mocha');
+
 suite('trying client', () => {
   var DockerClient = require('../src/client.js');
   var DockerServer = require('../src/server.js');
@@ -197,7 +199,7 @@ suite('trying client', () => {
     client.close();
   });
 
-/*  test('server pause', async (done) => {
+/*  test('server pause', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -213,7 +215,6 @@ suite('trying client', () => {
       assert(message.toString() === 'hello\n', 'message recieved was incorrect');
       client.close();
       clearTimeout(timer);
-      done();
     });
     setTimeout(() => {
       paused = false;
@@ -224,7 +225,7 @@ suite('trying client', () => {
     }, 500);
   });*/
 
-  test('connection limit', async (done) => {
+  test('connection limit', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:8082/a',
       tty: false,
@@ -245,7 +246,6 @@ suite('trying client', () => {
       // Possible solution: There's no way to cancel execute, so we could
       // emit something on end of execute so the close function knows when to close
       // That doesn't seem like a very nice solution to me though
-      done();
     });
     client2.execute();
   });
@@ -271,13 +271,12 @@ suite('trying client', () => {
     client.close();
   });
 
-  test('session count', async (done) => {
+  test('session count', async () => {
     var sessionCount;
     dockerServer.once('session added', (num) => {
       sessionCount = num;
       dockerServer.once('session removed', (newnum) => {
         assert(num === newnum + 1, 'session count not working properly');
-        done();
       })
     })
     var client = new DockerClient({
@@ -309,7 +308,6 @@ suite('trying client', () => {
         passed = true;
       }
       else {
-        debug(Buffer.concat(res).slice(0, 15));
         assert(Buffer.concat(res).length <= 5, 'message is wrong, not properly resized');
       }
     });
