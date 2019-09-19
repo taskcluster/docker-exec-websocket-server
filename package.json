@@ -14,7 +14,7 @@
     "promise": "6.1.0",
     "slugid": "1.0.3",
     "through2": "^2.0.0",
-    "ws": "2.2.0"
+    "ws": "3.3.1"
   },
   "devDependencies": {
     "assume": "^1.2.4",
