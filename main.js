@@ -1,4 +1,4 @@
 module.exports = {
-  DockerExecServer: require('./lib/server.js'),
-  DockerExecClient: require('./lib/client.js'),
+  DockerExecServer: require('./src/server.js'),
+  DockerExecClient: require('./src/client.js'),
 };
