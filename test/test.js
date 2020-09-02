@@ -4,11 +4,10 @@ suite('trying client', () => {
   var DockerClient = require('../src/client.js');
   var DockerServer = require('../src/server.js');
   var assert = require('assert');
-  var Docker = require('dockerode-promise');
+  var Docker = require('dockerode');
   var fs = require('fs');
   var http = require('http');
   var fs = require('fs');
-  var Docker = require('dockerode-promise');
   var sleep = require('./sleep');
   var poll = require('./poll');
 

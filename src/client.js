@@ -7,7 +7,6 @@ var msgcode = require('./messagecodes.js');
 var querystring = require('querystring');
 var through2 = require('through2').obj;
 var WS = require('ws');
-var Promise = require('promise');
 
 var BROWSER = typeof window === 'undefined';
 
