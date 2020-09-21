@@ -1,6 +1,6 @@
 {
   "name": "docker-exec-websocket-server",
-  "version": "1.3.7",
+  "version": "1.4.0",
   "scripts": {
     "test": "./test/runtests.sh"
   },
