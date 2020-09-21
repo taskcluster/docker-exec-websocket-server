@@ -5,6 +5,11 @@
     "test": "./test/runtests.sh"
   },
   "license": "MPL-2.0",
+  "files": [
+    "src",
+    "main.js",
+    "browser.js"
+  ],
   "main": "main.js",
   "dependencies": {
     "debug": "^4.1.1",
