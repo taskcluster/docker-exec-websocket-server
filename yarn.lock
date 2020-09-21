@@ -352,6 +352,15 @@ diff@3.5.0:
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
   integrity sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==
 
+docker-exec-websocket-client@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/docker-exec-websocket-client/-/docker-exec-websocket-client-1.4.0.tgz#d6e4ebb879c040ace5e99f7478fffa2c71d087b9"
+  integrity sha512-rle9HF49Uau9G04cDnqIC1Q8M9Q6hrX6BuwZV4jk1+ciWLzfUt8A7dr5ISyxt4jAexTX+C4x9y0X15x12O+JpQ==
+  dependencies:
+    debug "^4.1.1"
+    through2 "^3.0.1"
+    ws "^7.1.2"
+
 docker-modem@^2.1.0:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/docker-modem/-/docker-modem-2.1.4.tgz#54ec1079287624a8d30cc3c55ab0e1201e7c46c9"
@@ -1554,14 +1563,6 @@ slice-ansi@^2.1.0:
     astral-regex "^1.0.0"
     is-fullwidth-code-point "^2.0.0"
 
-slugid@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/slugid/-/slugid-2.0.0.tgz#f08f651b677e666093e6617e10486aa2e73ed8a6"
-  integrity sha512-zTCivUfTk2GC6MU4Fjcz0iXwAjhe0NweMJqpfWcGrBbrm2dWtVAUupAonfsc7ysw4M0kZ934Nle5ljwM2dR+/g==
-  dependencies:
-    uuid "^3.2.1"
-    uuid-parse "^1.0.0"
-
 split-ca@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/split-ca/-/split-ca-1.0.1.tgz#6c83aff3692fa61256e0cd197e05e9de157691a6"
@@ -1811,16 +1812,6 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
-
-uuid-parse@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/uuid-parse/-/uuid-parse-1.1.0.tgz#7061c5a1384ae0e1f943c538094597e1b5f3a65b"
-  integrity sha512-OdmXxA8rDsQ7YpNVbKSJkNzTw2I+S5WsbMDnCtIWSQaosNAcWtFuI/YK1TjzUI6nbkgiqEyh8gWngfcv8Asd9A==
-
-uuid@^3.2.1:
-  version "3.3.3"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.3.3.tgz#4568f0216e78760ee1dbf3a4d2cf53e224112866"
-  integrity sha512-pW0No1RGHgzlpHJO1nsVrHKpOEIxkGg1xB+v0ZmdNH5OAeAwzAVrCnI2/6Mtx+Uys6iaylxa+D3g4j63IKKjSQ==
 
 v8-compile-cache@^2.0.3:
   version "2.1.0"
