@@ -5,6 +5,8 @@
 ## Purpose
 A server that serves the results of docker exec over websockets.
 
+See `docker-exec-websocket-client` for a client that communicates with this server.
+
 ## Usage
 Server:
 
@@ -23,31 +25,6 @@ var dockerServer = new DockerServer({
 await dockerServer.execute();
 ```
 By default, uses `/var/run/docker.sock` to communicate with Docker.
-
-Client:
-
-```js
-var DockerClient = require('../lib/client.js');
-var client = new DockerClient({
-  url: 'ws://localhost:8081/a' //whole url of websocket, preface with wss if secure
-  tty: 'true', //Whether or not we expect VT100 style output, also enables exit codes
-  command: '/bin/bash', //Command to be run, can be an array with options such as ['cat', '-E']
-  wsopts: {}, //Pass in websocket options for the underlying websocket
-});
-await client.execute();
-process.stdin.pipe(client.stdin);
-client.stdout.pipe(process.stdout);
-client.stderr.pipe(process.stderr);
-client.on('exit', (exitCode) => {
-  //exitCode is a number between 0 and 255
-  process.exit(exitCode);
-});
-```
-There are also other client events:
-* `open` signifies the opening of the websocket
-* `pause` and `resume` signify when the server has paused/resumed sending data
-* `shutdown` signifies the server was shut down
-* `error` signifies that some sort of internal error occured, and may carry a utf-8 payload
 
 ## Message Types
 Messages are prepended with a single byte which contains information about the encoded message. The payload is a `Buffer` in node, or a `UInt8Array` in browserify.

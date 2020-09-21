@@ -1,7 +1,7 @@
 const {suite, test, before, after} = require('mocha');
 
 suite('trying client', () => {
-  var DockerClient = require('../src/client.js');
+  var DockerClient = require('docker-exec-websocket-client').DockerExecClient;
   var DockerServer = require('../src/server.js');
   var assert = require('assert');
   var Docker = require('dockerode');
