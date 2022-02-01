@@ -133,7 +133,7 @@ suite('trying client', () => {
 
     // Write some bytes on stdin to cat, then close stdin
     var input = new Uint8Array([97, 98, 99]);
-    client.stdin.write(new Buffer(input));
+    client.stdin.write(Buffer.from(input));
     client.stdin.end();
 
     // Read bytes from stdout
@@ -166,10 +166,10 @@ suite('trying client', () => {
     });
     await client.execute();
     var buf1 = new Uint8Array([0xfa, 0xff, 0x0a]);
-    client.stdin.write(new Buffer(buf1));
+    client.stdin.write(Buffer.from(buf1));
     var passed = false;
     client.stdout.on('data', (message) => {
-      var buf = new Buffer([0xfa, 0xff, 0x24, 0x0a]); //0x24 is $ from the -E option
+      var buf = Buffer.from([0xfa, 0xff, 0x24, 0x0a]); //0x24 is $ from the -E option
       assert(buf.compare(message) === 0, 'message wrong!');
       passed = true;
     });
@@ -258,8 +258,8 @@ suite('trying client', () => {
     await client.execute();
     //before the socket opens, the writes will just buffer in memory
     // await sleep(1000);
-    client.strbuf.write(new Buffer(8 * 1024 * 1024 + 1));
-    // assert(!client.strbuf.write(new Buffer(1)));
+    client.strbuf.write(Buffer.alloc(8 * 1024 * 1024 + 1));
+    // assert(!client.strbuf.write(Buffer.alloc(1)));
     var passed = false;
     client.on('paused', () => {
       passed = true;
@@ -299,7 +299,7 @@ suite('trying client', () => {
 
     var passed = false;
     var byteNum = 0;
-    var buf = new Buffer([0x62, 0x69, 0x6e, 0x0d, 0x0a]);
+    var buf = Buffer.from([0x62, 0x69, 0x6e, 0x0d, 0x0a]);
     var res = [];
     client.stdout.on('data', (message) => {
       res.push(message);

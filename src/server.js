@@ -69,7 +69,7 @@ class ExecSession {
     //   req.setTimeout(10000, reject);
     // });
     // debug(this.execStream);
-    // this.execStream.write(new Buffer([30]));
+    // this.execStream.write(Buffer.from([30]));
 
     var header = null;
 
@@ -156,11 +156,11 @@ class ExecSession {
   }
 
   sendCode(code) {
-    return this.strbuf.write(new Buffer([code]), {binary: true});
+    return this.strbuf.write(Buffer.from([code]), {binary: true});
   }
 
   sendMessage(code, buffer) {
-    return this.strbuf.write(Buffer.concat([new Buffer([code]), buffer]), {binary: true});
+    return this.strbuf.write(Buffer.concat([Buffer.from([code]), buffer]), {binary: true});
   }
 
   messageHandler(message) {
@@ -197,7 +197,7 @@ class ExecSession {
             w: message.readUInt16LE(3),
           });
         } else {
-          this.sendMessage(msgcode.error, new Buffer('cannot resize, not a tty instance'));
+          this.sendMessage(msgcode.error, Buffer.from('cannot resize, not a tty instance'));
         }
         break;
 
@@ -212,7 +212,7 @@ class ExecSession {
     debug('exit code: %s', info.ExitCode);
     if (!this.closed) {
       try {
-        this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
+        this.sendMessage(msgcode.stopped, Buffer.from([info.ExitCode]));
         this.strbuf.end();
         this.strbuf.on('finish', () => {this.close(); });
       } catch (err) {
@@ -307,8 +307,8 @@ class DockerExecWebsocketServer extends EventEmitter {
     // Reject connection of we're at the session limit
     if (this.sessions.length >= this.options.maxSessions) {
       socket.send(Buffer.concat([
-       new Buffer([msgcode.error]),
-       new Buffer('Too many sessions active!'),
+       Buffer.from([msgcode.error]),
+       Buffer.from('Too many sessions active!'),
       ]));
       return socket.close();
     }
