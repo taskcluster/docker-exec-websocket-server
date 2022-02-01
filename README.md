@@ -1,7 +1,5 @@
 # docker-exec-websocket-server
 
-[![Build Status](https://travis-ci.org/taskcluster/docker-exec-websocket-server.svg?branch=master)](https://travis-ci.org/taskcluster/docker-exec-websocket-server)
-
 ## Purpose
 A server that serves the results of docker exec over websockets.
 
@@ -44,5 +42,16 @@ error: 202 // Some internal error occurred, expect undefined behaviour
 ```
 
 ## Testing
+Ensure Docker is installed (``docker -v``).
 
-Docker 1.6.1 or above must be installed with a container named `servertest` running with `cat` and `/bin/bash` capabilities to inject the exec process into. From there, `npm test` will carry out the test.
+To test locally:
+
+* Run ``yarn install`` to install the dependencies, including developer dependencies
+* Run ``yarn test``
+
+To test with ``docker-compose``:
+
+* Run ``docker-compose build --build-arg NODE_VERSION=16-bullseye``, or change to the desired
+  [Node.js image tag](https://hub.docker.com/_/node/)
+* Run ``docker-compose run test``
+* Repeat ``docker-compose build ...`` when the code changes or you want to try a different Node.js image.

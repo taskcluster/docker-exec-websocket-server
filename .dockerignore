@@ -1,0 +1,6 @@
+*log
+.env
+.git
+.taskcluster.yml
+Dockerfile
+node_modules

@@ -5,3 +5,5 @@ node_modules
 *docker-exec-client.js
 test/browserifytest.js
 test/testserver.js
+Dockerfile
+docker-compose.yml

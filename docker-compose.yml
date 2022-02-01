@@ -1,0 +1,17 @@
+version: "2"
+
+services:
+  testserver:
+    image: ubuntu
+    command: "sleep 60"
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: local/docker-exec-websocket-server
+    depends_on:
+      - testserver
+    volumes:
+      - ./:/home/node/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: /var/run/app/node_modules/.bin/mocha --exit /var/run/app/test/test.js

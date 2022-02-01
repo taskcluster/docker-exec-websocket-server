@@ -1,39 +1,61 @@
-version: 0
-metadata:
-  name: docker-exec-websocket-server
-  description: 'Helpers for testing taskcluster'
-  owner: '{{ event.head.user.email }}'
-  source: '{{ event.head.repo.url }}'
+version: 1
+policy:
+  pullRequests: public
 tasks:
-  - provisionerId: '{{ taskcluster.docker.provisionerId }}'
-    workerType: '{{ taskcluster.docker.workerType }}'
-    extra:
-      github:
-        events:
-          - push
-        branches:
-          - master
-    scopes:
-      - auth:aws-s3:read-write:taskcluster-raw-docs/docker-exec-websocket-server/
-    payload:
-      maxRunTime: 3600
-      image: taskcluster/upload-project-docs:latest
-      features:
-        taskclusterProxy:
-          true
-      command:
-        - /bin/bash
-        - '--login'
-        - '-cx'
-        - >-
-          git clone {{event.head.repo.url}} repo &&
-          cd repo &&
-          git config advice.detachedHead false &&
-          git checkout {{event.head.sha}} &&
-          export DOCS_PROJECT=docker-exec-websocket-server DOCS_TIER=libraries DOCS_FOLDER=docs DOCS_README=README.md &&
-          upload-project-docs
-    metadata:
-      name: "docker-exec-websocket-server docs upload"
-      description: "Upload documentation for this project"
-      owner: '{{ event.head.user.email }}'
-      source: '{{ event.head.repo.url }}'
+  $let:
+    proj_name: "docker-exec-websocket-server"
+    head_rev:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.sha}
+      else: ${event.after}
+    repository:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.repo.html_url}
+      else: ${event.repository.html_url}
+    environments:
+      - node_image_tag: 16-bullseye
+        description: Run tests with node v16
+      - node_image_tag: 14-bullseye
+        description: Run tests with node v14
+      - node_image_tag: 12-bullseye
+        description: Run tests with node v12
+      - node_image_tag: "10"
+        description: Run tests with node v10
+      - node_image_tag: "8"
+        description: Run tests with node v8
+      - node_image_tag: current-bullseye
+        description: Run tests with current node version
+  in:
+    $if: tasks_for == "github-pull-request" && event["action"] in ["opened","reopened","synchronize"]
+    then:
+      $map: {$eval: environments}
+      each(env):
+        taskId: {$eval: as_slugid(proj_name + ":node:" + env.node_image_tag + ":tests")}
+        deadline:
+          $fromNow: 1 day
+        taskQueueId: proj-taskcluster/gw-ci-ubuntu-18-04
+        metadata:
+          name: node:${env.node_image_tag} tests
+          description: ${env.description}
+          owner: ${event.sender.login}@users.noreply.github.com
+          source: ${event.repository.url}
+        payload:
+          maxRunTime: 3600
+          env:
+            BUILDKIT_PROGRESS: plain  # auto / tty is over-verbose
+            REPO_DIR: {$eval: as_slugid(proj_name + ":node:" + env.node_image_tag + ":tests")}
+          command:
+            -
+              - /bin/bash
+              - -vxec
+              - >
+                git --version &&
+                git clone --no-progress "${repository}" "$REPO_DIR" &&
+                chmod a+wrx "$REPO_DIR" &&
+                cd "$REPO_DIR" &&
+                git config advice.detachedHead "false" &&
+                git checkout --no-progress "${head_rev}" &&
+                curl -sL "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose &&
+                chmod +x /usr/local/bin/docker-compose &&
+                /usr/local/bin/docker-compose build --build-arg "NODE_VERSION=${env.node_image_tag}" &&
+                /usr/local/bin/docker-compose run test
