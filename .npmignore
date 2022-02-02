@@ -1,11 +1,6 @@
 node_modules
-.vagrant
 .env
 *log
-Vagrantfile
-vagrant.sh
-startup.sh
-circle.yml
 .gitignore
 *docker-exec-client.js
 test/browserifytest.js
