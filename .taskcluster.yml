@@ -19,8 +19,6 @@ tasks:
         description: Run tests with node v14
       - node_image_tag: 12-bullseye
         description: Run tests with node v12
-      - node_image_tag: "10"
-        description: Run tests with node v10
       - node_image_tag: current-bullseye
         description: Run tests with current node version
   in:
