@@ -124,7 +124,7 @@ class ExecSession {
     this.socket.on('message', (message) => {
       try {
         this.messageHandler(message);
-      } catch(e) {
+      } catch (e) {
         debug('Error: %s %j, closing connection', e, e, e.stack);
         this.close();
       }
@@ -237,9 +237,9 @@ class ExecSession {
         this.server.sessions.splice(index, 1);
         debug('%s sessions remain', this.server.sessions.length);
         this.server.emit('session removed', this.server.sessions.length);
-        try {this.execStream.end(); } catch(err) {/*ignore*/}
-        try {this.execStream.destroy(); } catch(err) {/*ignore*/}
-        try {this.socket.destroy(); } catch(err) {/*ignore*/}
+        try {this.execStream.end(); } catch (err) {/*ignore*/}
+        try {this.execStream.destroy(); } catch (err) {/*ignore*/}
+        try {this.socket.destroy(); } catch (err) {/*ignore*/}
       }
     }
   }
@@ -278,7 +278,7 @@ class DockerExecWebsocketServer extends EventEmitter {
       'options.wrapperCommand must be an array!');
     // Test that we have a docker socket
     assert(fs.statSync(this.options.dockerSocket).isSocket(),
-     'Are you sure that docker is running?');
+      'Are you sure that docker is running?');
 
     // Setup docker
     var docker = new Docker({socketPath: options.dockerSocket});
@@ -307,8 +307,8 @@ class DockerExecWebsocketServer extends EventEmitter {
     // Reject connection of we're at the session limit
     if (this.sessions.length >= this.options.maxSessions) {
       socket.send(Buffer.concat([
-       Buffer.from([msgcode.error]),
-       Buffer.from('Too many sessions active!'),
+        Buffer.from([msgcode.error]),
+        Buffer.from('Too many sessions active!'),
       ]));
       return socket.close();
     }
@@ -321,11 +321,11 @@ class DockerExecWebsocketServer extends EventEmitter {
 
     // Construct session
     var session = new ExecSession({
-       container: this.container,
-       socket: socket,
-       command: this.options.wrapperCommand.concat(args.command),
-       tty: /^true$/i.test(args.tty),
-       server: this,
+      container: this.container,
+      socket: socket,
+      command: this.options.wrapperCommand.concat(args.command),
+      tty: /^true$/i.test(args.tty),
+      server: this,
     });
 
     this.sessions.push(session);

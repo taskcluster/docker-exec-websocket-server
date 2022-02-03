@@ -21,7 +21,7 @@ suite('trying client', () => {
 
   // Setup docker container we can play with
   var dockerServer, dockerServer2, container;
-  before(async() => {
+  before(async () => {
     var docker = new Docker({socketPath: DOCKER_SOCKET});
 
     await docker.pull('ubuntu');
@@ -30,7 +30,7 @@ suite('trying client', () => {
       // Create docker container
       container = await docker.createContainer({
         Image: 'ubuntu',
-        Cmd: ['sleep', '600']
+        Cmd: ['sleep', '600'],
       });
     }, 40, 500);
 
@@ -61,12 +61,11 @@ suite('trying client', () => {
   });
 
   // Clean up after docker container
-  after(async() => {
+  after(async () => {
     dockerServer.close();
     dockerServer2.close();
     await container.remove({v: true, force: true});
   });
-
 
   /*test('docker exec true', async () => {
     var client = new DockerClient({
@@ -88,7 +87,6 @@ suite('trying client', () => {
 
     client.close();
   });
-
 
   test('docker exec echo test', async () => {
     var client = new DockerClient({
@@ -120,7 +118,6 @@ suite('trying client', () => {
     client.close();
   });*/
 
-
   test('docker exec wc -c', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
@@ -146,12 +143,12 @@ suite('trying client', () => {
       client.on('exit', accept);
       client.on('error', reject);
     });
-    console.log("Exit code: " + code);
+    console.log('Exit code: ' + code);
 
     stdout = Buffer.concat(stdout);
     stderr = Buffer.concat(stderr);
-    console.log("stdout: '%s'", stdout.toString());
-    console.log("stderr: '%s'", stderr.toString());
+    console.log('stdout: \'%s\'', stdout.toString());
+    console.log('stderr: \'%s\'', stderr.toString());
 
     assert(code === 0, 'Expected exit code to be zero');
 
@@ -198,7 +195,7 @@ suite('trying client', () => {
     client.close();
   });
 
-/*  test('server pause', async () => {
+  /*  test('server pause', async () => {
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -276,8 +273,8 @@ suite('trying client', () => {
       sessionCount = num;
       dockerServer.once('session removed', (newnum) => {
         assert(num === newnum + 1, 'session count not working properly');
-      })
-    })
+      });
+    });
     var client = new DockerClient({
       url: 'ws://localhost:' + PORT + '/a',
       tty: false,
@@ -303,10 +300,9 @@ suite('trying client', () => {
     var res = [];
     client.stdout.on('data', (message) => {
       res.push(message);
-      if(!buf.compare(Buffer.concat(res).slice(0, 5))) {
+      if (!buf.compare(Buffer.concat(res).slice(0, 5))) {
         passed = true;
-      }
-      else {
+      } else {
         assert(Buffer.concat(res).length <= 5, 'message is wrong, not properly resized');
       }
     });
