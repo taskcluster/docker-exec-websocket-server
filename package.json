@@ -15,7 +15,7 @@
     "debug": "^4.1.1",
     "dockerode": "^3.2.1",
     "lodash": "^4.17.21",
-    "through2": "^3.0.1",
+    "through2": "^4.0.2",
     "ws": "^7.4.6"
   },
   "devDependencies": {
