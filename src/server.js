@@ -28,6 +28,7 @@ class ExecSession {
       stdin: true,
       stdout: true,
       stderr: true,
+      hijack: true,  // Docker Engine v1.22 feature, better support for stdin, stdout, and stderr on same socket
     };
     this.container = options.container;
     this.server = options.server;
@@ -180,7 +181,7 @@ class ExecSession {
         break;
 
       case msgcode.stdin:
-        if (!this.execStream.write(message.slice(1), {binary: true})) {
+        if (!this.execStream.write(message.slice(1))) {
           this.sendCode(msgcode.pause);
           debug('paused');
         }

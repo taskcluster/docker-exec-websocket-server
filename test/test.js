@@ -145,14 +145,13 @@ suite('trying client', () => {
       client.on('exit', accept);
       client.on('error', reject);
     });
-    console.log('Exit code: ' + code);
 
-    stdout = Buffer.concat(stdout);
-    stderr = Buffer.concat(stderr);
-    console.log('stdout: \'%s\'', stdout.toString());
-    console.log('stderr: \'%s\'', stderr.toString());
+    stdout = Buffer.concat(stdout).toString();
+    stderr = Buffer.concat(stderr).toString();
 
     assert(code === 0, 'Expected exit code to be zero');
+    assert(stdout === '3\n', 'Expected wc to count 3 characters');
+    assert(stderr === '', 'Expected stderr to be empty');
 
     client.close();
   });
