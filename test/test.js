@@ -20,7 +20,7 @@ suite('trying client', () => {
   }
 
   // Setup docker container we can play with
-  var dockerServer, dockerServer2, container;
+  var server, server2, dockerServer, dockerServer2, container;
   before(async () => {
     var docker = new Docker({socketPath: DOCKER_SOCKET});
 
@@ -38,7 +38,7 @@ suite('trying client', () => {
     await container.start();
 
     // Start server
-    var server = http.createServer();
+    server = http.createServer();
     await new Promise(accept => server.listen(PORT, accept));
 
     // Docker docket socket server
@@ -49,7 +49,7 @@ suite('trying client', () => {
     });
 
     //another server to do the connection limit tests
-    var server2 = http.createServer();
+    server2 = http.createServer();
     await new Promise(accept => server2.listen(8082, accept));
 
     dockerServer2 = new DockerServer({
@@ -63,7 +63,9 @@ suite('trying client', () => {
   // Clean up after docker container
   after(async () => {
     dockerServer.close();
+    server.close();
     dockerServer2.close();
+    server2.close();
     await container.remove({v: true, force: true});
   });
 
