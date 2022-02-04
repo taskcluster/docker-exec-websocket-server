@@ -59,4 +59,4 @@ tasks:
                 curl -sL "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o ~/bin/docker-compose &&
                 chmod +x ~/bin/docker-compose &&
                 ~/bin/docker-compose build --build-arg "NODE_VERSION=${env.node_image_tag}" &&
-                ~/bin/docker-compose run test
+                ~/bin/docker-compose run --rm test

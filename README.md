@@ -54,5 +54,5 @@ To test with ``docker-compose``, similar to CI:
 
 * Run ``docker-compose build --build-arg NODE_VERSION=16-bullseye``, or change to the desired
   [Node.js image tag](https://hub.docker.com/_/node/)
-* Run ``docker-compose run test``
+* Run ``docker-compose run --rm test``
 * Repeat ``docker-compose build ...`` when the code changes or you want to try a different Node.js image.
