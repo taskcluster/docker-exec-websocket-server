@@ -7,4 +7,4 @@ USER root
 RUN mkdir /var/run/app
 COPY . /var/run/app/
 WORKDIR /var/run/app
-RUN yarn install
+RUN yarn install --ignore-engines
