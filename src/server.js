@@ -240,7 +240,7 @@ class ExecSession {
         this.server.emit('session removed', this.server.sessions.length);
         try {this.execStream.end(); } catch (err) {/*ignore*/}
         try {this.execStream.destroy(); } catch (err) {/*ignore*/}
-        try {this.socket.destroy(); } catch (err) {/*ignore*/}
+        try {this.socket.terminate(); } catch (err) {/*ignore*/}
       }
     }
   }
