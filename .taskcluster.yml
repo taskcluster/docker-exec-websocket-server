@@ -42,19 +42,23 @@ tasks:
           env:
             BUILDKIT_PROGRESS: plain  # auto / tty is over-verbose
             REPO_DIR: {$eval: as_slugid(proj_name + ":node:" + env.node_image_tag + ":tests")}
+          mounts:
+            - file: bin/docker-compose
+              content:
+                url: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
+                sha256: f15a7cd54a85f760a8ece92da63fb85b93036c72ead8056391b8a3fe9dc73134
           command:
             -
               - /bin/bash
               - -vxec
-              - >
-                git --version &&
-                git clone --no-progress "${repository}" "$REPO_DIR" &&
-                chmod a+wrx "$REPO_DIR" &&
-                cd "$REPO_DIR" &&
-                git config advice.detachedHead "false" &&
-                git checkout --no-progress "${head_rev}" &&
-                mkdir -p ~/bin &&
-                curl -sL "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o ~/bin/docker-compose &&
-                chmod +x ~/bin/docker-compose &&
-                ~/bin/docker-compose build --build-arg "NODE_VERSION=${env.node_image_tag}" &&
-                ~/bin/docker-compose run --rm test
+              - |
+                docker info
+                git --version
+                git clone --no-progress "${repository}" "$REPO_DIR"
+                chmod a+wrx "$REPO_DIR"
+                cd "$REPO_DIR"
+                git config advice.detachedHead "false"
+                git checkout --no-progress "${head_rev}"
+                chmod a+x "/$${USER}/bin/docker-compose"
+                "/$${USER}/bin/docker-compose" build --build-arg "NODE_VERSION=${env.node_image_tag}"
+                "/$${USER}/bin/docker-compose" run --rm test
