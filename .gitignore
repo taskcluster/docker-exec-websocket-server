@@ -1,5 +1,4 @@
 node_modules
-.vagrant
 .env
 *log
 examples/browserify.js

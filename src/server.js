@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var assert = require('assert');
-var debug = require('debug')('docker-exec-server');
-var debugdata = require('debug')('docker-exec-server:data');
+var debug = require('debug')('docker-exec-websocket-server');
+var debugdata = require('debug')('docker-exec-websocket-server:data');
 var Docker = require('dockerode');
 var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
@@ -28,6 +28,7 @@ class ExecSession {
       stdin: true,
       stdout: true,
       stderr: true,
+      hijack: true,  // Docker Engine v1.22 feature, better support for stdin, stdout, and stderr on same socket
     };
     this.container = options.container;
     this.server = options.server;
@@ -69,7 +70,7 @@ class ExecSession {
     //   req.setTimeout(10000, reject);
     // });
     // debug(this.execStream);
-    // this.execStream.write(new Buffer([30]));
+    // this.execStream.write(Buffer.from([30]));
 
     var header = null;
 
@@ -124,7 +125,7 @@ class ExecSession {
     this.socket.on('message', (message) => {
       try {
         this.messageHandler(message);
-      } catch(e) {
+      } catch (e) {
         debug('Error: %s %j, closing connection', e, e, e.stack);
         this.close();
       }
@@ -156,11 +157,11 @@ class ExecSession {
   }
 
   sendCode(code) {
-    return this.strbuf.write(new Buffer([code]), {binary: true});
+    return this.strbuf.write(Buffer.from([code]), {binary: true});
   }
 
   sendMessage(code, buffer) {
-    return this.strbuf.write(Buffer.concat([new Buffer([code]), buffer]), {binary: true});
+    return this.strbuf.write(Buffer.concat([Buffer.from([code]), buffer]), {binary: true});
   }
 
   messageHandler(message) {
@@ -180,7 +181,7 @@ class ExecSession {
         break;
 
       case msgcode.stdin:
-        if (!this.execStream.write(message.slice(1), {binary: true})) {
+        if (!this.execStream.write(message.slice(1))) {
           this.sendCode(msgcode.pause);
           debug('paused');
         }
@@ -197,7 +198,7 @@ class ExecSession {
             w: message.readUInt16LE(3),
           });
         } else {
-          this.sendMessage(msgcode.error, new Buffer('cannot resize, not a tty instance'));
+          this.sendMessage(msgcode.error, Buffer.from('cannot resize, not a tty instance'));
         }
         break;
 
@@ -212,7 +213,7 @@ class ExecSession {
     debug('exit code: %s', info.ExitCode);
     if (!this.closed) {
       try {
-        this.sendMessage(msgcode.stopped, new Buffer([info.ExitCode]));
+        this.sendMessage(msgcode.stopped, Buffer.from([info.ExitCode]));
         this.strbuf.end();
         this.strbuf.on('finish', () => {this.close(); });
       } catch (err) {
@@ -237,9 +238,9 @@ class ExecSession {
         this.server.sessions.splice(index, 1);
         debug('%s sessions remain', this.server.sessions.length);
         this.server.emit('session removed', this.server.sessions.length);
-        try {this.execStream.end(); } catch(err) {/*ignore*/}
-        try {this.execStream.destroy(); } catch(err) {/*ignore*/}
-        try {this.socket.destroy(); } catch(err) {/*ignore*/}
+        try {this.execStream.end(); } catch (err) {/*ignore*/}
+        try {this.execStream.destroy(); } catch (err) {/*ignore*/}
+        try {this.socket.terminate(); } catch (err) {/*ignore*/}
       }
     }
   }
@@ -278,7 +279,7 @@ class DockerExecWebsocketServer extends EventEmitter {
       'options.wrapperCommand must be an array!');
     // Test that we have a docker socket
     assert(fs.statSync(this.options.dockerSocket).isSocket(),
-     'Are you sure that docker is running?');
+      'Are you sure that docker is running?');
 
     // Setup docker
     var docker = new Docker({socketPath: options.dockerSocket});
@@ -307,8 +308,8 @@ class DockerExecWebsocketServer extends EventEmitter {
     // Reject connection of we're at the session limit
     if (this.sessions.length >= this.options.maxSessions) {
       socket.send(Buffer.concat([
-       new Buffer([msgcode.error]),
-       new Buffer('Too many sessions active!'),
+        Buffer.from([msgcode.error]),
+        Buffer.from('Too many sessions active!'),
       ]));
       return socket.close();
     }
@@ -321,11 +322,11 @@ class DockerExecWebsocketServer extends EventEmitter {
 
     // Construct session
     var session = new ExecSession({
-       container: this.container,
-       socket: socket,
-       command: this.options.wrapperCommand.concat(args.command),
-       tty: /^true$/i.test(args.tty),
-       server: this,
+      container: this.container,
+      socket: socket,
+      command: this.options.wrapperCommand.concat(args.command),
+      tty: /^true$/i.test(args.tty),
+      server: this,
     });
 
     this.sessions.push(session);

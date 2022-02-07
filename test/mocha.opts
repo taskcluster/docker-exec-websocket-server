@@ -1,3 +1,0 @@
---ui tdd
---timeout 40s
---reporter spec

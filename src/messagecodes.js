@@ -12,6 +12,6 @@ module.exports = {
   // resolution related message types
   stopped: 200, // Process exited, payload is single byte exit code
   shutdown: 201, // Server shut down
-  error: 202 // Some internal error occurred, expect undefined behaviour
+  error: 202, // Some internal error occurred, expect undefined behaviour
   //may carry utf8 payload regarding error reason
 };

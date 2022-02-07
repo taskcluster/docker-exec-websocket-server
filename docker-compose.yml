@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: local/docker-exec-websocket-server
+    volumes:
+      - ./:/home/node/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: /var/run/app/node_modules/.bin/mocha --exit /var/run/app/test/test.js
