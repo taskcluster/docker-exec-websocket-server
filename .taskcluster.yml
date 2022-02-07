@@ -41,7 +41,7 @@ tasks:
           maxRunTime: 3600
           env:
             BUILDKIT_PROGRESS: plain  # auto / tty is over-verbose
-            REPO_DIR: {$eval: as_slugid(proj_name + ":node:" + env.node_image_tag + ":tests")}
+            REPO_DIR: ${proj_name}
           mounts:
             - file: bin/docker-compose
               content:
@@ -55,10 +55,9 @@ tasks:
                 docker info
                 git --version
                 git clone --no-progress "${repository}" "$REPO_DIR"
-                chmod a+wrx "$REPO_DIR"
                 cd "$REPO_DIR"
                 git config advice.detachedHead "false"
                 git checkout --no-progress "${head_rev}"
-                chmod a+x "/$${USER}/bin/docker-compose"
-                "/$${USER}/bin/docker-compose" build --build-arg "NODE_VERSION=${env.node_image_tag}"
-                "/$${USER}/bin/docker-compose" run --rm test
+                chmod a+x ../bin/docker-compose
+                ../bin/docker-compose build --build-arg "NODE_VERSION=${env.node_image_tag}"
+                ../bin/docker-compose run --rm test
