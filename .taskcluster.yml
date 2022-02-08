@@ -60,4 +60,4 @@ tasks:
                 git checkout --no-progress "${head_rev}"
                 chmod a+x ../bin/docker-compose
                 ../bin/docker-compose build --build-arg "NODE_VERSION=${env.node_image_tag}"
-                ../bin/docker-compose run --rm test
+                ../bin/docker-compose run --rm --no-TTY test
