@@ -31,7 +31,7 @@ tasks:
         taskId: {$eval: as_slugid(proj_name + ":node:" + env.node_image_tag + ":tests")}
         deadline:
           $fromNow: 1 day
-        taskQueueId: proj-taskcluster/gw-ci-ubuntu-18-04
+        taskQueueId: proj-taskcluster/gw-ci-ubuntu-22-04
         metadata:
           name: node:${env.node_image_tag} tests
           description: ${env.description}
